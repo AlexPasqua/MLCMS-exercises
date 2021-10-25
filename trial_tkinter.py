@@ -2,7 +2,6 @@ from tkinter import *
 
 class Cell():
     FILLED_COLOR_BG = "green"
-    FILLED_COLOR_BG_ALTERNATIVE = "red"
     EMPTY_COLOR_BG = "white"
     FILLED_COLOR_BORDER = "green"
     EMPTY_COLOR_BORDER = "black"
@@ -22,12 +21,12 @@ class Cell():
     def draw(self):
         """ order to the cell to draw its representation on the canvas """
         if self.master != None :
-            fill = Cell.FILLED_COLOR_BG  
-            outline = Cell.FILLED_COLOR_BORDER
+            fill = self.FILLED_COLOR_BG  
+            outline = self.FILLED_COLOR_BORDER
 
             if not self.fill:
-                fill = Cell.EMPTY_COLOR_BG
-                outline = Cell.EMPTY_COLOR_BORDER
+                fill = self.EMPTY_COLOR_BG
+                outline = self.EMPTY_COLOR_BORDER
 
             xmin = self.abs * self.size
             xmax = xmin + self.size
@@ -37,9 +36,11 @@ class Cell():
             self.master.create_rectangle(xmin, ymin, xmax, ymax, fill = fill, outline = outline)
 
 class CellGrid(Canvas):
+    FILLED_COLOR_BG = "green"
+    FILLED_COLOR_BORDER = "green"
     def __init__(self,master, rowNumber, columnNumber, cellSize, *args, **kwargs):
-        Canvas.__init__(self, master, width = cellSize * columnNumber, height = cellSize * rowNumber, *args, **kwargs)
-
+        self.canvas = Canvas.__init__(self, master, width = cellSize * columnNumber, height = cellSize * rowNumber, *args, **kwargs)
+        Button(self.canvas, text= "Alex Schifoso", command= self.drawPerson).pack()
         self.cellSize = cellSize
 
         self.grid = []
@@ -63,8 +64,6 @@ class CellGrid(Canvas):
 
         self.draw()
 
-
-
     def draw(self):
         for row in self.grid:
             for cell in row:
@@ -79,6 +78,7 @@ class CellGrid(Canvas):
         row, column = self._eventCoords(event)
         cell = self.grid[row][column]
         cell._switch()
+        cell.FILLED_COLOR_BG, cell.FILLED_COLOR_BORDER = self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER
         cell.draw()
         #add the cell to the list of cell switched during the click
         self.switched.append(cell)
@@ -92,11 +92,15 @@ class CellGrid(Canvas):
             cell.draw()
             self.switched.append(cell)
 
+    def drawPerson(self):
+        self.FILLED_COLOR_BG = "red"
+        self.FILLED_COLOR_BORDER = "red"
+
 
 if __name__ == "__main__" :
     app = Tk()
 
-    grid = CellGrid(app, 5, 5, 30)
+    grid = CellGrid(app, 50, 50, 10)
     grid.pack()
 
     app.mainloop()
