@@ -30,7 +30,7 @@ class Cell:
         self.fill = not self.fill
 
     def draw(self, fill, outline):
-        """ order to the cell to draw its representation on the canvas """
+        """ order to the cell to draw_empty_grid its representation on the canvas """
         if self.master is not None:
             if not self.fill:
                 fill = self.EMPTY_COLOR_BG
@@ -45,8 +45,14 @@ class Cell:
             self.master.create_rectangle(x_min, y_min, x_max, y_max, fill=fill, outline=outline)
 
     def update_status(self, fill):
-        self.status = 'Blank' if fill == 'white' else (
-            'Person' if fill == 'red' else ('Obstacle' if fill == 'black' else 'Target'))
+        if fill == 'white':
+            self.status = 'Blank'
+        elif fill == 'red':
+            self.status = 'Person'
+        elif fill == 'black':
+            self.status = 'Obstacle'
+        else:
+            self.status = 'Target'
 
 
 def close_app(event):
@@ -54,13 +60,12 @@ def close_app(event):
 
 
 class CellGrid(Canvas):
-    FILLED_COLOR_BG = "green"
-    FILLED_COLOR_BORDER = "green"
-
     def __init__(self, master, row_number, column_number, cell_size, *args, **kwargs):
         self.canvas = Canvas.__init__(self, master, width=cell_size * column_number, height=cell_size * row_number,
                                       *args, **kwargs)
-        self.selected_cell = None  # needed after editing
+        self.FILLED_COLOR_BG = "green"
+        self.FILLED_COLOR_BORDER = "green"
+        self.selected_pedestrian = None  # needed after editing
         self.buttons = []
         self.init_buttons()
 
@@ -68,11 +73,7 @@ class CellGrid(Canvas):
 
         self.grid = []
         for row in range(row_number):
-
-            line = []
-            for column in range(column_number):
-                line.append(Cell(self, column, row, cell_size))
-
+            line = [Cell(self, column, row, cell_size) for column in range(column_number)]
             self.grid.append(line)
 
         # memorize the cells that have been modified to avoid many switching of state during mouse motion.
@@ -87,9 +88,9 @@ class CellGrid(Canvas):
         # bind escape button action - exit application
         self.bind("<Escape>", close_app)
 
-        self.draw()
+        self.draw_empty_grid()
 
-    def draw(self):
+    def draw_empty_grid(self):
         for row in self.grid:
             for cell in row:
                 cell.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
@@ -110,7 +111,6 @@ class CellGrid(Canvas):
     def handle_mouse_motion(self, event):
         row, column = self._event_coords(event)
         cell = self.grid[row][column]
-
         if cell not in self.switched:
             cell.switch()
             cell.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
@@ -123,7 +123,7 @@ class CellGrid(Canvas):
         obstacle_button.pack()
         target_button = Button(self.canvas, text="Target", command=self.draw_target)
         target_button.pack()
-        run_button = Button(self.canvas, text="Run", command=self.end_editing)
+        run_button = Button(self.canvas, text="Run", command=self.switch_mode)
         run_button.pack()
         self.buttons = [person_button, obstacle_button, target_button, run_button]
         target_button.configure(relief=SUNKEN, state=DISABLED)
@@ -138,26 +138,32 @@ class CellGrid(Canvas):
     def draw_person(self):
         self.update_buttons_state("Person")
         color = "red"
-        self.FILLED_COLOR_BG = color if self.FILLED_COLOR_BG != color else "green"
-        self.FILLED_COLOR_BORDER = color if self.FILLED_COLOR_BORDER != color else "green"
+        self.FILLED_COLOR_BG = color
+        self.FILLED_COLOR_BORDER = color
 
     def draw_obstacle(self):
         self.update_buttons_state("Obstacle")
         color = "black"
-        self.FILLED_COLOR_BG = color if self.FILLED_COLOR_BG != color else "green"
-        self.FILLED_COLOR_BORDER = color if self.FILLED_COLOR_BORDER != color else "green"
+        self.FILLED_COLOR_BG = color
+        self.FILLED_COLOR_BORDER = color
 
     def draw_target(self):
         self.update_buttons_state("Target")
         color = "green"
-        self.FILLED_COLOR_BG = color if self.FILLED_COLOR_BG != color else "green"
-        self.FILLED_COLOR_BORDER = color if self.FILLED_COLOR_BORDER != color else "green"
+        self.FILLED_COLOR_BG = color
+        self.FILLED_COLOR_BORDER = color
 
-    def end_editing(self):
+    def switch_mode(self):
         """
         enter run mode -> override key bindings to control certain person
         :return:
         """
+        if self.buttons[-1]['text'] == 'Run':
+            self.run_mode()
+        else:
+            self.editing_mode()
+
+    def run_mode(self):
         print('Entering movement mode..')
         # bind click action
         self.bind("<Button-1>", self.select_person)
@@ -174,38 +180,54 @@ class CellGrid(Canvas):
         self.unbind("<ButtonRelease-1>")
         self.FILLED_COLOR_BORDER = 'red'
         self.FILLED_COLOR_BG = 'red'
+        for button in self.buttons[: -1]:
+            button.configure(relief=SUNKEN, state=DISABLED)
+        self.buttons[-1]['text'] = "Editing mode"
+
+    def editing_mode(self):
+        self.bind("<Button-1>", self.handle_mouse_click)
+        self.bind("<B1-Motion>", self.handle_mouse_motion)
+        self.bind("<ButtonRelease-1>", lambda event: self.switched.clear())
+        self.unbind(("<Left>", "<Right>", "<Up>", "<Down>", "a", "s", "d", "w"))
+        for button in self.buttons[: -1]:
+            button.configure(relief=RAISED, state=ACTIVE)
+        self.buttons[0].configure(relief=RAISED, state=ACTIVE)  # person
+        self.buttons[1].configure(relief=RAISED, state=ACTIVE)  # obstacle
+        self.buttons[2].configure(relief=SUNKEN, state=DISABLED)  # target
+        self.draw_target()
+        self.buttons[3]['text'] = "Run"     # run / editing mode
 
     def select_person(self, event):
         row, column = self._event_coords(event)
         candidate_cell = self.grid[row][column]
         print(candidate_cell.status)
         if candidate_cell.status == 'Person':
-            self.selected_cell = candidate_cell
+            self.selected_pedestrian = candidate_cell
 
     def move_person(self, event):
-        self.selected_cell.switch()
-        self.selected_cell.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
-        if event.keysym == 'Right' or event.keysym == 'd':
-            candidate_cell = self.grid[self.selected_cell.ord][self.selected_cell.abs + 1]
-        elif event.keysym == 'Left' or event.keysym == 'a':
-            candidate_cell = self.grid[self.selected_cell.ord][self.selected_cell.abs - 1]
-        elif event.keysym == 'Up' or event.keysym == 'w':
-            candidate_cell = self.grid[self.selected_cell.ord - 1][self.selected_cell.abs]
-        else:
-            candidate_cell = self.grid[self.selected_cell.ord + 1][self.selected_cell.abs]
-        if candidate_cell.status not in ('Obstacle', 'Person'):
-            self.selected_cell = candidate_cell
-        if candidate_cell.status == 'Target':
-            self.selected_cell = None
-        self.selected_cell.switch()
-        self.selected_cell.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
+        if self.selected_pedestrian is not None:
+            self.selected_pedestrian.switch()
+            self.selected_pedestrian.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
+            if event.keysym == 'Right' or event.keysym == 'd':
+                candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs + 1]
+            elif event.keysym == 'Left' or event.keysym == 'a':
+                candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs - 1]
+            elif event.keysym == 'Up' or event.keysym == 'w':
+                candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs]
+            else:
+                candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs]
+            if candidate_cell.status not in ('Obstacle', 'Person'):
+                self.selected_pedestrian = candidate_cell
+            if candidate_cell.status == 'Target':
+                self.selected_pedestrian = None
+            else:
+                self.selected_pedestrian.switch()
+                self.selected_pedestrian.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
 
 
 if __name__ == "__main__":
     app = Tk()
-
     grid = CellGrid(app, 50, 50, 10)
     grid.pack()
-    grid.focus_set()
-
+    grid.focus_set()  # to receive inputs form keyboard
     app.mainloop()
