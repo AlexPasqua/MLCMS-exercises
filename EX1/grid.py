@@ -37,7 +37,6 @@ class Cell:
     def switch(self):
         """
         changes the fill modality: if fill is false then the next draw call will "Blank" the cell
-        :return:
         """
         self.fill = not self.fill
 
@@ -46,7 +45,6 @@ class Cell:
         effectively draw the cell, changing its color
         :param fill:
         :param outline:
-        :return:
         """
         if self.master is not None:
             if not self.fill:
@@ -62,26 +60,25 @@ class Cell:
         given a filling color changes the state of the cell, updating also the cell_grid lists of current
         notable cells
         :param fill:
-        :return:
         """
         if fill == 'white':
             # the removal from the lists is done only here since before changing color each cell has to return Blank
             if self.status == 'Person':
                 self.master.pedestrian_list.remove(self)
             elif self.status == 'Obstacle':
-                self.master.obstacle_list.remove(self)
+                self.master.obstacles_list.remove(self)
             elif self.status == 'Target':
-                self.master.target_list.remove(self)
+                self.master.targets_list.remove(self)
             self.status = 'Blank'
         elif fill == 'red':
             self.status = 'Person'
             self.master.pedestrian_list.append(self)
         elif fill == 'black':
             self.status = 'Obstacle'
-            self.master.obstacle_list.append(self)
+            self.master.obstacles_list.append(self)
         else:
             self.status = 'Target'
-            self.master.target_list.append(self)
+            self.master.targets_list.append(self)
 
 
 def close_app(event):
@@ -95,9 +92,9 @@ class CellGrid(Canvas):
         self.FILLED_COLOR_BG = "green"
         self.FILLED_COLOR_BORDER = "green"
         self.selected_pedestrian = None  # needed after editing
-        self.target_list = []
+        self.targets_list = []
         self.pedestrian_list = []
-        self.obstacle_list = []
+        self.obstacles_list = []
         self.person_button = None
         self.obstacle_button = None
         self.target_button = None
@@ -196,7 +193,6 @@ class CellGrid(Canvas):
     def switch_mode(self):
         """
         enter free walk mode -> override key bindings to control certain person
-        :return:
         """
         if self.free_walk_button['text'] == 'Free Walk':
             self.free_walk_mode()
@@ -306,15 +302,17 @@ class CellGrid(Canvas):
         self.target_button.configure(relief=SUNKEN, state=DISABLED)
         self.free_walk_button['text'] = "Editing mode"
         while len(self.pedestrian_list) != 0:
-            temp_pedestrian_list = self.pedestrian_list
-            for pedestrian in temp_pedestrian_list:
-                print(pedestrian)
-                self.update_cost_function()
-                self.selected_pedestrian = pedestrian
-                self.next_movement(pedestrian)
-                self.update()
 
-            #pseudo code
+            # # old version
+            # temp_pedestrian_list = self.pedestrian_list
+            # for pedestrian in temp_pedestrian_list:
+            #     print(pedestrian)
+            #     self.update_cost_function()
+            #     self.selected_pedestrian = pedestrian
+            #     self.next_movement(pedestrian)
+            #     self.update()
+
+            # new version -> pseudo code
             random.shuffle(self.pedestrian_list)
             temp_grid = copy.deepcopy(self)
             for pedestrian in self.pedestrian_list:
@@ -374,7 +372,7 @@ class CellGrid(Canvas):
                 cell.cost = 0
 
         # for each target add distance cost to cells
-        for target in self.target_list:
+        for target in self.targets_list:
             target_pos = np.array([target.ord, target.abs])
             for line in self.grid:
                 for cell in line:
@@ -382,13 +380,13 @@ class CellGrid(Canvas):
                     cell.cost += np.linalg.norm(target_pos - cell_pos)
 
         # targets cost 0
-        for target in self.target_list:
+        for target in self.targets_list:
             target.cost = 0
 
         # pedestrians and obstacles are unreachable -> infinite cost
         for pedestrian in self.pedestrian_list:
             pedestrian.cost = math.inf
-        for obstacle in self.obstacle_list:
+        for obstacle in self.obstacles_list:
             obstacle.cost = math.inf
 
         # print cost on cell (at the moment)
