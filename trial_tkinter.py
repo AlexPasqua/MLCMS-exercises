@@ -258,7 +258,7 @@ class CellGrid(Canvas):
             self.selected_pedestrian.switch()
             self.selected_pedestrian.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
             if event is not None:
-                if event.keysym == 'Right' or event.keysym == 'd' or event.keysym == '<<Right>>':
+                if event.keysym == 'Right' or event.keysym == 'd':
                     candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs + 1]
                 elif event.keysym == 'Left' or event.keysym == 'a':
                     candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs - 1]
@@ -305,10 +305,16 @@ class CellGrid(Canvas):
         self.obstacle_button.configure(relief=SUNKEN, state=DISABLED)
         self.target_button.configure(relief=SUNKEN, state=DISABLED)
         self.free_walk_button['text'] = "Editing mode"
-        for pedestrian in self.pedestrian_list:
-            self.update_cost_function()
-            self.selected_pedestrian = pedestrian
-            self.next_movement(pedestrian)
+        while len(self.pedestrian_list) != 0:
+            temp_pedestrian_list = self.pedestrian_list
+            for pedestrian in temp_pedestrian_list:
+                print(pedestrian)
+                self.update_cost_function()
+                self.selected_pedestrian = pedestrian
+                self.next_movement(pedestrian)
+                self.update()
+
+            time.sleep(1)
 
     def next_movement(self, pedestrian):
         """
@@ -356,10 +362,10 @@ class CellGrid(Canvas):
 
         # for each target add distance cost to cells
         for target in self.target_list:
+            target_pos = np.array([target.ord, target.abs])
             for line in self.grid:
                 for cell in line:
                     cell_pos = np.array([cell.ord, cell.abs])
-                    target_pos = np.array([target.ord, target.abs])
                     cell.cost += np.linalg.norm(target_pos - cell_pos)
 
         # targets cost 0
@@ -383,7 +389,7 @@ class CellGrid(Canvas):
 
 if __name__ == "__main__":
     app = Tk()
-    grid = CellGrid(app, 20, 20, 30)
+    grid = CellGrid(app, 5, 5, 50)
     grid.pack()
     grid.focus_set()  # to receive inputs form keyboard
     app.mainloop()
