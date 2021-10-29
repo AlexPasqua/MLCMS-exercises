@@ -1,7 +1,9 @@
+import copy
 from tkinter import *
 import math
 import time
 import numpy as np
+import random
 
 """
 At the moment it is possible to edit the field of play as one prefers. Once the Run button is pressed the player can 
@@ -12,9 +14,7 @@ obstacles.
 """
 
 
-# TODO manage the edges
-# TODO make the player another color so that it is recognizable
-# TODO zero out the cost if entering editing mode
+# TODO manage the edges when moving
 
 class Cell:
     EMPTY_COLOR_BG = "white"
@@ -313,6 +313,19 @@ class CellGrid(Canvas):
                 self.selected_pedestrian = pedestrian
                 self.next_movement(pedestrian)
                 self.update()
+
+            #pseudo code
+            random.shuffle(self.pedestrian_list)
+            temp_grid = copy.deepcopy(self)
+            for pedestrian in self.pedestrian_list:
+                pedestrian.update_cost_function(temp_grid)
+                pedestrian.move(temp_grid) # check if active, if not pass. if active then plan the move, set timestamp, set to sleeping
+            self.advance_time() # check all sleeping, diminish time by 0.2, if time remaining = 0.0 append to moving_people, move them, update, make them active
+
+
+
+
+
 
             time.sleep(1)
 
