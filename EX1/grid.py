@@ -91,6 +91,7 @@ class CellGrid(Canvas):
                                       *args, **kwargs)
         self.FILLED_COLOR_BG = "green"
         self.FILLED_COLOR_BORDER = "green"
+        self.TIME_STEP = 0.2
         self.selected_pedestrian = None  # needed after editing
         self.targets_list = []
         self.pedestrian_list = []
@@ -317,15 +318,9 @@ class CellGrid(Canvas):
             temp_grid = copy.deepcopy(self)
             for pedestrian in self.pedestrian_list:
                 pedestrian.update_cost_function(temp_grid)
-                pedestrian.move(temp_grid) # check if active, if not pass. if active then plan the move, set timestamp, set to sleeping
-            self.advance_time() # check all sleeping, diminish time by 0.2, if time remaining = 0.0 append to moving_people, move them, update, make them active
+                pedestrian.move(temp_grid)
 
-
-
-
-
-
-            time.sleep(1)
+            time.sleep(0.2)
 
     def next_movement(self, pedestrian):
         """

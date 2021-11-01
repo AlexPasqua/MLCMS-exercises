@@ -54,21 +54,23 @@ class Pedestrian:
         self.grid = grid
 
         if self.active:
-            # TODO: plan the move (copy code from grid ('next_movement' method I think))
+            # plan the move
+            surrounding_costs = np.zeros(shape=(3, 3))
+            for i in range(-1, 2):
+                for j in range(-1, 2):
+                    if not (i == 0 and j == 0):
+                        if 0 <= self.x + i < len(self.grid[0]) and 0 <= self.y + j < len(self.grid):
+                            surrounding_costs[i + 1][j + 1] = self.cost_matrix[self.x + i][self.y + j]
+                        else:
+                            surrounding_costs[i + 1][j + 1] = math.inf
+            min_cost_x, min_cost_y = np.unravel_index(surrounding_costs.argmin(), surrounding_costs.shape)
 
-            # set time of the last step and waiting time
-            self.time_last_step = time.time() * 1e3
-            # TODO: complete
-            """
-            Pseudo code:
-            if move is diagonal:
-                self.waiting_time = 1400 ms
-            else:
-                self.waiting_time = 1000 ms
-            """
+            # if move is diagonal, set waiting time to 1.4s, otherwise to 1.0s
+            self.waiting_time = 1.4 if abs(min_cost_x) - abs(min_cost_y) == 0 else 1.0
 
             # set pedestrian to sleep
             self.active = False
         else:
-            self.waiting_time -= time.time() * 1e3 - self.time_last_step    # decrease waiting time
-
+            self.waiting_time -= self.grid.TIME_STEP
+            if self.waiting_time <= 0:
+                self.active = True
