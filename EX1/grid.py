@@ -89,6 +89,7 @@ class CellGrid(Canvas):
     def __init__(self, master, row_number, column_number, cell_size, *args, **kwargs):
         self.canvas = Canvas.__init__(self, master, width=cell_size * column_number, height=cell_size * row_number,
                                       *args, **kwargs)
+        self.master = master
         self.FILLED_COLOR_BG = "green"
         self.FILLED_COLOR_BORDER = "green"
         self.TIME_STEP = 0.2
@@ -254,34 +255,31 @@ class CellGrid(Canvas):
         if self.selected_pedestrian is not None:
             self.selected_pedestrian.switch()
             self.selected_pedestrian.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
-            if event is not None:
-                if event.keysym == 'Right' or event.keysym == 'd':
-                    candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs + 1]
-                elif event.keysym == 'Left' or event.keysym == 'a':
-                    candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs - 1]
-                elif event.keysym == 'Up' or event.keysym == 'w':
-                    candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs]
-                else:
-                    candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs]
-            elif movement is not None:
-                if movement == '<<Up_Left>>':
-                    candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs - 1]
-                elif movement == '<<Up>>':
-                    candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs]
-                elif movement == '<<Up_Right>>':
-                    candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs + 1]
-                elif movement == '<<Left>>':
-                    candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs - 1]
-                elif movement == '<<Right>>':
-                    candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs + 1]
-                elif movement == '<<Down_Left>>':
-                    candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs - 1]
-                elif movement == '<<Down>>':
-                    candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs]
-                else:
-                    candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs + 1]
+            if event.keysym == 'Right' or event.keysym == 'd':
+                candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs + 1]
+            elif event.keysym == 'Left' or event.keysym == 'a':
+                candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs - 1]
+            elif event.keysym == 'Up' or event.keysym == 'w':
+                candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs]
             else:
-                print("Something here is fishy..")
+                candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs]
+            # elif movement is not None:
+            #     if movement == '<<Up_Left>>':
+            #         candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs - 1]
+            #     elif movement == '<<Up>>':
+            #         candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs]
+            #     elif movement == '<<Up_Right>>':
+            #         candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs + 1]
+            #     elif movement == '<<Left>>':
+            #         candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs - 1]
+            #     elif movement == '<<Right>>':
+            #         candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs + 1]
+            #     elif movement == '<<Down_Left>>':
+            #         candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs - 1]
+            #     elif movement == '<<Down>>':
+            #         candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs]
+            #     else:
+            #         candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs + 1]
             if candidate_cell.status not in ('Obstacle', 'Person'):
                 self.selected_pedestrian = candidate_cell
             if candidate_cell.status == 'Target':
@@ -289,6 +287,14 @@ class CellGrid(Canvas):
             else:
                 self.selected_pedestrian.switch()
                 self.selected_pedestrian.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
+
+    def create_copy_grid(self):
+        grid = CellGrid(master=self.master, row_number=len(self.grid[:][0]), column_number=len(self.grid[0]), cell_size=self.cellSize)
+        grid.pedestrian_list = copy.deepcopy(self.pedestrian_list)
+        grid.obstacles_list = copy.deepcopy(self.obstacles_list)
+        grid.targets_list = copy.deepcopy(self.targets_list)
+        grid.grid = copy.deepcopy(self.grid)
+        return grid
 
     def start_simulation(self):
         [cell.master.delete('cost_value') for line in self.grid for cell in line]
@@ -302,6 +308,8 @@ class CellGrid(Canvas):
         self.obstacle_button.configure(relief=SUNKEN, state=DISABLED)
         self.target_button.configure(relief=SUNKEN, state=DISABLED)
         self.free_walk_button['text'] = "Editing mode"
+
+        planning_grid = self.create_copy_grid()
         while len(self.pedestrian_list) != 0:
 
             # # old version
@@ -315,12 +323,12 @@ class CellGrid(Canvas):
 
             # new version -> pseudo code
             random.shuffle(self.pedestrian_list)
-            temp_grid = copy.deepcopy(self)
             for pedestrian in self.pedestrian_list:
-                pedestrian.update_cost_function(temp_grid)
-                pedestrian.move(temp_grid)
+                pedestrian.update_cost_function(planning_grid)
+                planning_grid = pedestrian.move()
 
             time.sleep(0.2)
+            self.update()   # graphical update of the grid
 
     def next_movement(self, pedestrian):
         """
