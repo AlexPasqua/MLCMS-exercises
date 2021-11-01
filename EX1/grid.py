@@ -1,9 +1,8 @@
-import copy
 from tkinter import *
-import math
 import time
-import numpy as np
 import random
+from planning_grid import PlanningGrid
+from pedestrian import Pedestrian
 
 """
 At the moment it is possible to edit the field of play as one prefers. Once the Run button is pressed the player can 
@@ -17,6 +16,10 @@ obstacles.
 # TODO manage the edges when moving
 
 class Cell:
+    """
+    Object to handle at a low level the graphical cell, its color filling and its status changing
+    """
+
     EMPTY_COLOR_BG = "white"
     EMPTY_COLOR_BORDER = "black"
 
@@ -26,13 +29,12 @@ class Cell:
         self.abs = x
         self.ord = y
         self.size = size
-        self.fill = False
-        self.status = "Blank"
-        self.cost = 0
+        self.fill = False  # if False then the cell will be blanked out at next "draw" call
         self.borders = [self.abs * self.size,
                         self.ord * self.size,
                         (self.abs + 1) * self.size,
                         (self.ord + 1) * self.size]
+        self.status = "Blank"  # 4 possible statuses: Blank, Person, Obstacle, Target
 
     def switch(self):
         """
@@ -64,39 +66,51 @@ class Cell:
         if fill == 'white':
             # the removal from the lists is done only here since before changing color each cell has to return Blank
             if self.status == 'Person':
-                self.master.pedestrian_list.remove(self)
+                self.master.pedestrian_cell_list.remove(self)
             elif self.status == 'Obstacle':
-                self.master.obstacles_list.remove(self)
+                self.master.obstacles_cell_list.remove(self)
             elif self.status == 'Target':
-                self.master.targets_list.remove(self)
+                self.master.targets_cell_list.remove(self)
             self.status = 'Blank'
         elif fill == 'red':
             self.status = 'Person'
-            self.master.pedestrian_list.append(self)
+            self.master.pedestrian_cell_list.append(self)
         elif fill == 'black':
             self.status = 'Obstacle'
-            self.master.obstacles_list.append(self)
+            self.master.obstacles_cell_list.append(self)
         else:
             self.status = 'Target'
-            self.master.targets_list.append(self)
+            self.master.targets_cell_list.append(self)
 
 
 def close_app(event):
+    """
+    press the ESCAPE key to terminate the program
+    :param event:
+    :return:
+    """
     sys.exit()
 
 
 class CellGrid(Canvas):
+    """
+    Object to handle the overall execution, maintaining the graphical grid and switching between different modalities
+    """
     def __init__(self, master, row_number, column_number, cell_size, *args, **kwargs):
         self.canvas = Canvas.__init__(self, master, width=cell_size * column_number, height=cell_size * row_number,
                                       *args, **kwargs)
         self.master = master
         self.FILLED_COLOR_BG = "green"
         self.FILLED_COLOR_BORDER = "green"
-        self.TIME_STEP = 0.2
-        self.selected_pedestrian = None  # needed after editing
-        self.targets_list = []
-        self.pedestrian_list = []
-        self.obstacles_list = []
+        self.TIME_STEP = 0.2  # needed for simulation
+        self.selected_pedestrian = None  # needed for free walk mode
+        self.targets_cell_list = []
+        self.pedestrian_cell_list = []  # lower level structure, containing only the Cell object
+        self.pedestrian_list = []       # higher level structure, containing Pedestrian object
+        self.obstacles_cell_list = []
+        self.cellSize = cell_size
+
+        # buttons and their initialization
         self.person_button = None
         self.obstacle_button = None
         self.target_button = None
@@ -105,8 +119,7 @@ class CellGrid(Canvas):
         self.buttons = []
         self.init_buttons()
 
-        self.cellSize = cell_size
-
+        # graphical grid init
         self.grid = []
         for row in range(row_number):
             line = [Cell(self, column, row, cell_size) for column in range(column_number)]
@@ -124,6 +137,7 @@ class CellGrid(Canvas):
         # bind escape button action - exit application
         self.bind("<Escape>", close_app)
 
+        # draw grid
         self.draw_empty_grid()
 
     def draw_empty_grid(self):
@@ -132,11 +146,22 @@ class CellGrid(Canvas):
                 cell.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
 
     def _event_coords(self, event):
+        """
+        to capture the correct locations of keyboard/mouse triggered events
+        :param event:
+        :return:
+        """
         row = int(event.y / self.cellSize)
         column = int(event.x / self.cellSize)
         return row, column
 
     def handle_mouse_click(self, event):
+        """
+        function to handle left mouse click, coloring a specific cell
+        :param event:
+        :return:
+        """
+
         row, column = self._event_coords(event)
         cell = self.grid[row][column]
         cell.switch()
@@ -145,6 +170,11 @@ class CellGrid(Canvas):
         self.switched.append(cell)
 
     def handle_mouse_motion(self, event):
+        """
+        function to handle the multiple coloring feature, happening when clicking and maintaining left mouse button
+        :param event:
+        :return:
+        """
         row, column = self._event_coords(event)
         cell = self.grid[row][column]
         if cell not in self.switched:
@@ -153,6 +183,10 @@ class CellGrid(Canvas):
             self.switched.append(cell)
 
     def init_buttons(self):
+        """
+        function to initialize all buttons, binding them to a certain function to trigger when an event arrives
+        :return:
+        """
         self.person_button = Button(self.canvas, text="Person", command=self.draw_person)
         self.person_button.pack()
         self.obstacle_button = Button(self.canvas, text="Obstacle", command=self.draw_obstacle)
@@ -165,9 +199,15 @@ class CellGrid(Canvas):
         self.free_walk_button.pack()
         self.buttons = [self.person_button, self.obstacle_button, self.target_button, self.run_simulation_button,
                         self.free_walk_button]
+        # target button is pressed by default
         self.target_button.configure(relief=SUNKEN, state=DISABLED)
 
     def update_buttons_state(self, current_button_text):
+        """
+        rises the previously pressed button, keeps pressed the last fired button
+        :param current_button_text:
+        :return:
+        """
         for button in self.buttons:
             if button['text'] == current_button_text:
                 button.configure(relief=SUNKEN, state=DISABLED)
@@ -175,18 +215,30 @@ class CellGrid(Canvas):
                 button.configure(relief=RAISED, state=ACTIVE)
 
     def draw_person(self):
+        """
+        prepares the color configuration for drawing Person/Pedestrian
+        :return:
+        """
         self.update_buttons_state("Person")
         color = "red"
         self.FILLED_COLOR_BG = color
         self.FILLED_COLOR_BORDER = color
 
     def draw_obstacle(self):
+        """
+        prepares the color configuration for drawing Obstacle
+        :return:
+        """
         self.update_buttons_state("Obstacle")
         color = "black"
         self.FILLED_COLOR_BG = color
         self.FILLED_COLOR_BORDER = color
 
     def draw_target(self):
+        """
+        prepares the color configuration for drawing Target
+        :return:
+        """
         self.update_buttons_state("Target")
         color = "green"
         self.FILLED_COLOR_BG = color
@@ -194,7 +246,8 @@ class CellGrid(Canvas):
 
     def switch_mode(self):
         """
-        enter free walk mode -> override key bindings to control certain person
+        handler for switching back and forth between Editing Mode and Free Walk Mode
+        :return:
         """
         if self.free_walk_button['text'] == 'Free Walk':
             self.free_walk_mode()
@@ -202,6 +255,10 @@ class CellGrid(Canvas):
             self.editing_mode()
 
     def free_walk_mode(self):
+        """
+        changes the key bindings for handling the free walk mode
+        :return:
+        """
         print('Entering movement mode..')
         # bind click action
         self.bind("<Button-1>", self.select_person)
@@ -233,6 +290,11 @@ class CellGrid(Canvas):
         self.free_walk_button['text'] = "Editing mode"
 
     def editing_mode(self):
+        """
+        changes the key bindings for handling the editing mode
+        :return:
+        """
+        print('Entering movement mode..')
         self.bind("<Button-1>", self.handle_mouse_click)
         self.bind("<B1-Motion>", self.handle_mouse_motion)
         self.bind("<ButtonRelease-1>", lambda event: self.switched.clear())
@@ -244,15 +306,25 @@ class CellGrid(Canvas):
         self.free_walk_button['text'] = "Free Walk"  # free walk / editing mode
 
     def select_person(self, event):
+        """
+        left-clicking on a Person cell will select it, making it able to be moved
+        :param event:
+        :return:
+        """
         row, column = self._event_coords(event)
         candidate_cell = self.grid[row][column]
-        print(candidate_cell.status)
         if candidate_cell.status == 'Person':
             self.selected_pedestrian = candidate_cell
 
     def move_person(self, event=None, movement=None):
+        """
+        function to handle movement in FREE WALK MODE
+        :param event:
+        :param movement:
+        :return:
+        """
         # TODO need to check boundaries!
-        if self.selected_pedestrian is not None:
+        if self.selected_pedestrian is not None:  # a pedestrian has to be selected by left-clicking it
             self.selected_pedestrian.switch()
             self.selected_pedestrian.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
             if event.keysym == 'Right' or event.keysym == 'd':
@@ -263,41 +335,20 @@ class CellGrid(Canvas):
                 candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs]
             else:
                 candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs]
-            # elif movement is not None:
-            #     if movement == '<<Up_Left>>':
-            #         candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs - 1]
-            #     elif movement == '<<Up>>':
-            #         candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs]
-            #     elif movement == '<<Up_Right>>':
-            #         candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs + 1]
-            #     elif movement == '<<Left>>':
-            #         candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs - 1]
-            #     elif movement == '<<Right>>':
-            #         candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs + 1]
-            #     elif movement == '<<Down_Left>>':
-            #         candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs - 1]
-            #     elif movement == '<<Down>>':
-            #         candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs]
-            #     else:
-            #         candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs + 1]
-            if candidate_cell.status not in ('Obstacle', 'Person'):
+            if candidate_cell.status not in ('Obstacle', 'Person'):  # to avoid going over an Obstacle or other person
                 self.selected_pedestrian = candidate_cell
-            if candidate_cell.status == 'Target':
+            if candidate_cell.status == 'Target':  # disappear when going on Target
                 self.selected_pedestrian = None
             else:
                 self.selected_pedestrian.switch()
                 self.selected_pedestrian.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
 
-    def create_copy_grid(self):
-        grid = CellGrid(master=self.master, row_number=len(self.grid[:][0]), column_number=len(self.grid[0]), cell_size=self.cellSize)
-        grid.pedestrian_list = copy.deepcopy(self.pedestrian_list)
-        grid.obstacles_list = copy.deepcopy(self.obstacles_list)
-        grid.targets_list = copy.deepcopy(self.targets_list)
-        grid.grid = copy.deepcopy(self.grid)
-        return grid
-
     def start_simulation(self):
-        [cell.master.delete('cost_value') for line in self.grid for cell in line]
+        """
+        handler for the Simulation Mode
+        :return:
+        """
+        print('Entering simulation mode..')
         # unbind unnecessary keys
         self.unbind("<Button-1>")
         self.unbind("<B1-Motion>")
@@ -309,101 +360,28 @@ class CellGrid(Canvas):
         self.target_button.configure(relief=SUNKEN, state=DISABLED)
         self.free_walk_button['text'] = "Editing mode"
 
-        planning_grid = self.create_copy_grid()
+        # create a PlanningGrid for more efficient management of simulation
+        planning_grid = PlanningGrid(self)
+
+        # create a Pedestrian list to access useful methods
+        self.pedestrian_list = [Pedestrian(self, cell) for cell in self.pedestrian_cell_list]
+
+        # continue simulating until all pedestrian have not reached a target
         while len(self.pedestrian_list) != 0:
-
-            # # old version
-            # temp_pedestrian_list = self.pedestrian_list
-            # for pedestrian in temp_pedestrian_list:
-            #     print(pedestrian)
-            #     self.update_cost_function()
-            #     self.selected_pedestrian = pedestrian
-            #     self.next_movement(pedestrian)
-            #     self.update()
-
-            # new version -> pseudo code
-            random.shuffle(self.pedestrian_list)
+            random.shuffle(self.pedestrian_list)  # to avoid giving advantage to the same Pedestrian all the time
             for pedestrian in self.pedestrian_list:
-                pedestrian.update_cost_function(planning_grid)
-                planning_grid = pedestrian.move()
+                pedestrian.update_cost_function(planning_grid)  # update local cost_matrix
+                planning_grid, pedestrian_has_ended = pedestrian.move()  # try to move (time constraints)
+                if pedestrian_has_ended:
+                    self.pedestrian_list.remove(pedestrian)
 
-            time.sleep(0.2)
+            time.sleep(self.TIME_STEP)  # problem discretization
             self.update()   # graphical update of the grid
-
-    def next_movement(self, pedestrian):
-        """
-        check 8 cells surrounding pedestrian, understanding where the lowest cost is.
-        A commodity array is constructed filling 8 positions so to have an easier way to get the final direction
-        :param pedestrian:
-        :return:
-        """
-        print("Calculating next move for pedestrian:", pedestrian.ord, pedestrian.abs, end=" - ")
-        surrounding_costs = np.zeros(8)
-        surrounding_costs[0] += self.grid[pedestrian.ord - 1][pedestrian.abs - 1].cost \
-            if pedestrian.ord - 1 >= 0 and pedestrian.abs - 1 >= 0 else math.inf  # upper-left neighbour
-
-        surrounding_costs[1] += self.grid[pedestrian.ord - 1][pedestrian.abs].cost \
-            if pedestrian.ord - 1 >= 0 else math.inf  # upper-mid neighbour
-
-        surrounding_costs[2] += self.grid[pedestrian.ord - 1][pedestrian.abs + 1].cost \
-            if pedestrian.ord - 1 >= 0 and pedestrian.abs + 1 < len(self.grid[0]) else math.inf  # upper-right neighbour
-
-        surrounding_costs[3] += self.grid[pedestrian.ord][pedestrian.abs - 1].cost \
-            if pedestrian.abs - 1 >= 0 else math.inf  # mid-left neighbour
-
-        surrounding_costs[4] += self.grid[pedestrian.ord][pedestrian.abs + 1].cost \
-            if pedestrian.abs + 1 < len(self.grid[0]) else math.inf  # mid-right neighbour
-
-        surrounding_costs[5] += self.grid[pedestrian.ord + 1][pedestrian.abs - 1].cost \
-            if pedestrian.ord + 1 < len(self.grid) and pedestrian.abs - 1 >= 0 else math.inf  # lower-left neighbour
-
-        surrounding_costs[6] += self.grid[pedestrian.ord + 1][pedestrian.abs].cost \
-            if pedestrian.ord + 1 < len(self.grid) else math.inf  # lower-mid neighbour
-
-        surrounding_costs[7] += self.grid[pedestrian.ord + 1][pedestrian.abs + 1].cost \
-            if pedestrian.ord + 1 < len(self.grid) and pedestrian.abs + 1 < len(
-            self.grid[0]) else math.inf  # lower-right neighbour
-        selected_movement = ["<<Up_Left>>", "<<Up>>", "<<Up_Right>>", "<<Left>>",
-                             "<<Right>>", "<<Down_Left>>", "<<Down>>", "<<Down_Right>>"][np.argmin(surrounding_costs)]
-        print("Calculated motion:", selected_movement)
-        self.move_person(movement=selected_movement)
-
-    def update_cost_function(self):
-        # put to zero otherwise would continue increasing with further updates
-        for line in self.grid:
-            for cell in line:
-                cell.cost = 0
-
-        # for each target add distance cost to cells
-        for target in self.targets_list:
-            target_pos = np.array([target.ord, target.abs])
-            for line in self.grid:
-                for cell in line:
-                    cell_pos = np.array([cell.ord, cell.abs])
-                    cell.cost += np.linalg.norm(target_pos - cell_pos)
-
-        # targets cost 0
-        for target in self.targets_list:
-            target.cost = 0
-
-        # pedestrians and obstacles are unreachable -> infinite cost
-        for pedestrian in self.pedestrian_list:
-            pedestrian.cost = math.inf
-        for obstacle in self.obstacles_list:
-            obstacle.cost = math.inf
-
-        # print cost on cell (at the moment)
-        # TODO get rid of this
-        for line in self.grid:
-            for cell in line:
-                cell.master.create_text(((cell.borders[0] + cell.borders[2]) // 2,
-                                         (cell.borders[1] + cell.borders[3]) // 2),
-                                        text=round(cell.cost, 1), tags='cost_value')
 
 
 if __name__ == "__main__":
     app = Tk()
-    grid = CellGrid(app, 5, 5, 50)
+    grid = CellGrid(app,  30, 30, 20)
     grid.pack()
     grid.focus_set()  # to receive inputs form keyboard
     app.mainloop()
