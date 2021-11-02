@@ -18,6 +18,7 @@ class Pedestrian:
         self.active = True  # active -> ready to plan next move, not active -> waiting to actuate a planned move
         self.goal_achieved = False  # arrived at Target, waiting for object removal
         self.waiting_time = 0.  # time left to wait
+        self.total_time = 0.  # total time to reach target
         # local cost function, for understanding which is the next best step to take
         self.cost_matrix = [[0. for i in range(len(grid.grid))] for j in range(len(grid.grid[0]))]
 
@@ -140,7 +141,8 @@ class Pedestrian:
         else:
             # decrease the waiting time
             self.waiting_time -= self.grid.TIME_STEP
-            if self.waiting_time <= 0:
+            self.total_time += self.grid.TIME_STEP
+            if round(self.waiting_time, 2) <= 0:
                 # if waiting time is over, move, set to active and update position
                 self.actuate_move(self.grid.grid, self.delta_x, self.delta_y, planning=False)
                 self.x, self.y = self.x + self.delta_x, self.y + self.delta_y

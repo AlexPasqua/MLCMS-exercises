@@ -357,6 +357,7 @@ class CellGrid(Canvas):
                 pedestrian.update_cost_function(planning_grid)  # update local cost_matrix
                 planning_grid, pedestrian_has_ended = pedestrian.move()  # try to move (time constraints)
                 if pedestrian_has_ended:
+                    print("Pedestrian reached target in:", pedestrian.total_time)
                     self.pedestrian_list.remove(pedestrian)
 
             time.sleep(self.TIME_STEP)  # problem discretization
@@ -365,7 +366,7 @@ class CellGrid(Canvas):
 
 if __name__ == "__main__":
     app = Tk()
-    grid = CellGrid(app,  10, 10, 50)
+    grid = CellGrid(app,  50, 50, 10)
     grid.pack()
     grid.focus_set()  # to receive inputs form keyboard
     app.mainloop()
