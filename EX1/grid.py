@@ -24,7 +24,6 @@ class Cell:
     EMPTY_COLOR_BORDER = "black"
 
     def __init__(self, master, x, y, size):
-        """ Constructor of the object called by Cell(...) """
         self.master = master
         self.abs = x
         self.ord = y
@@ -87,7 +86,6 @@ def close_app(event):
     """
     press the ESCAPE key to terminate the program
     :param event:
-    :return:
     """
     sys.exit()
 
@@ -149,7 +147,7 @@ class CellGrid(Canvas):
         """
         to capture the correct locations of keyboard/mouse triggered events
         :param event:
-        :return:
+        :return: the row and columns where the event occurred
         """
         row = int(event.y / self.cellSize)
         column = int(event.x / self.cellSize)
@@ -159,9 +157,7 @@ class CellGrid(Canvas):
         """
         function to handle left mouse click, coloring a specific cell
         :param event:
-        :return:
         """
-
         row, column = self._event_coords(event)
         cell = self.grid[row][column]
         cell.switch()
@@ -173,7 +169,6 @@ class CellGrid(Canvas):
         """
         function to handle the multiple coloring feature, happening when clicking and maintaining left mouse button
         :param event:
-        :return:
         """
         row, column = self._event_coords(event)
         cell = self.grid[row][column]
@@ -185,7 +180,6 @@ class CellGrid(Canvas):
     def init_buttons(self):
         """
         function to initialize all buttons, binding them to a certain function to trigger when an event arrives
-        :return:
         """
         self.person_button = Button(self.canvas, text="Person", command=self.draw_person)
         self.person_button.pack()
@@ -206,7 +200,6 @@ class CellGrid(Canvas):
         """
         rises the previously pressed button, keeps pressed the last fired button
         :param current_button_text:
-        :return:
         """
         for button in self.buttons:
             if button['text'] == current_button_text:
@@ -217,7 +210,6 @@ class CellGrid(Canvas):
     def draw_person(self):
         """
         prepares the color configuration for drawing Person/Pedestrian
-        :return:
         """
         self.update_buttons_state("Person")
         color = "red"
@@ -227,7 +219,6 @@ class CellGrid(Canvas):
     def draw_obstacle(self):
         """
         prepares the color configuration for drawing Obstacle
-        :return:
         """
         self.update_buttons_state("Obstacle")
         color = "black"
@@ -237,7 +228,6 @@ class CellGrid(Canvas):
     def draw_target(self):
         """
         prepares the color configuration for drawing Target
-        :return:
         """
         self.update_buttons_state("Target")
         color = "green"
@@ -247,7 +237,6 @@ class CellGrid(Canvas):
     def switch_mode(self):
         """
         handler for switching back and forth between Editing Mode and Free Walk Mode
-        :return:
         """
         if self.free_walk_button['text'] == 'Free Walk':
             self.free_walk_mode()
@@ -257,7 +246,6 @@ class CellGrid(Canvas):
     def free_walk_mode(self):
         """
         changes the key bindings for handling the free walk mode
-        :return:
         """
         print('Entering movement mode..')
         # bind click action
@@ -292,7 +280,6 @@ class CellGrid(Canvas):
     def editing_mode(self):
         """
         changes the key bindings for handling the editing mode
-        :return:
         """
         print('Entering movement mode..')
         self.bind("<Button-1>", self.handle_mouse_click)
@@ -309,7 +296,6 @@ class CellGrid(Canvas):
         """
         left-clicking on a Person cell will select it, making it able to be moved
         :param event:
-        :return:
         """
         row, column = self._event_coords(event)
         candidate_cell = self.grid[row][column]
@@ -321,7 +307,6 @@ class CellGrid(Canvas):
         function to handle movement in FREE WALK MODE
         :param event:
         :param movement:
-        :return:
         """
         # TODO need to check boundaries!
         if self.selected_pedestrian is not None:  # a pedestrian has to be selected by left-clicking it
@@ -346,7 +331,6 @@ class CellGrid(Canvas):
     def start_simulation(self):
         """
         handler for the Simulation Mode
-        :return:
         """
         print('Entering simulation mode..')
         # unbind unnecessary keys
@@ -381,7 +365,7 @@ class CellGrid(Canvas):
 
 if __name__ == "__main__":
     app = Tk()
-    grid = CellGrid(app,  30, 30, 20)
+    grid = CellGrid(app,  10, 10, 50)
     grid.pack()
     grid.focus_set()  # to receive inputs form keyboard
     app.mainloop()
