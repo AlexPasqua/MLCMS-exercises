@@ -33,28 +33,24 @@ class Pedestrian:
         self.planning_grid = planning_grid
 
         if dijkstra:
-            # create lists of visited and unvisited cells initialize all costs to infinity
-            visited, unvisited = [], []
+            table = pd.DataFrame(columns=("cell", "dist_from_source", "prev_cell", "visited"))
+
+            # initialize all costs to infinity
             source_x, source_y, source_name = self.x, self.y, str(self.x) + ',' + str(self.y)
             for i in range(len(self.planning_grid.grid[:][0])):
                 for j in range(len(self.planning_grid.grid[0][:])):
                     cell_coords_as_str = str(i) + ',' + str(j)  # coords of a cell expressed as string (to give the cell a name)
-                    unvisited.append(cell_coords_as_str)
+                    table_row = {'cell': cell_coords_as_str, 'dist_from_source': math.inf, 'prev_cell': '', 'visited': False}
+                    table = table.append(table_row)
                     self.cost_matrix[i][j] = math.inf
                     if self.planning_grid.grid[i][j] == self.planning_grid.TARGET_CELL:
                         target_x, target_y, target_name = i, j, cell_coords_as_str
                         self.cost_matrix[i][j] = 0
 
-            # create table: cell - distance from source - prev cell
-            table = pd.DataFrame(columns=("cell", "dist_from_source", "prev_cell"))
-            for cell in unvisited:
-                table = table.append({'cell': cell, 'dist_from_source': math.inf, 'prev_cell': '-'}, ignore_index=True)
-
             # for current cell, examine unvisited neighbors - if distance is shorter, update the table
             curr_x, curr_y, curr_name = source_x, source_y, source_name
             table.loc[table['cell'] == source_name, 'dist_from_source'] = 0  # set distance from source to itself to 0
-            visited.append(curr_name)
-            unvisited.remove(curr_name)
+            table.loc[table['cell'] == source_name, 'visited'] = True   # set source as visited
             for i in range(-1, 2):
                 for j in range(-1, 2):
                     if 0 <= curr_x + i < len(self.grid.grid[:][0]) and 0 <= curr_y + j < len(self.grid.grid[0][:]):
