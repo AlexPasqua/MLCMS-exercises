@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import pandas as pd
 
 
 class Pedestrian:
@@ -22,43 +23,54 @@ class Pedestrian:
         # local cost function, for understanding which is the next best step to take
         self.cost_matrix = [[0. for i in range(len(grid.grid))] for j in range(len(grid.grid[0]))]
 
-    def update_cost_function(self, planning_grid):
+    def update_cost_function(self, planning_grid, dijkstra=True):
         """
         updates the cost matrix, taking care of particular cases such as edges, Obstacles, other Pedestrians and Targets
-        :param planning_grid:
-        :return:
+        :param planning_grid: (PlanningGrid object) grid used to plan the move where cells that will be occupied result occupied immediately
+        :param dijkstra: if True, use Dijkstra algorithm for the shortest path, otherwise use simply euclidean distance
         """
         self.planning_grid = planning_grid
 
-        # find the nearest target by Euclidean Distance
-        min_dist = math.inf
-        min_idx = 0
-        for i, target in enumerate(self.planning_grid.targets_list):  # target is a tuple -> (row, column)
-            target_pos = np.array([target[0], target[1]])
-            dist = np.linalg.norm(target_pos - self.coords)
-            if dist < min_dist:
-                min_dist = dist
-                min_idx = i
-        nearest_target = self.planning_grid.targets_list[min_idx]
-        nearest_target_pos = np.array([nearest_target[0], nearest_target[1]])
+        if dijkstra:
+            # create table: cell - distance from source - prev cell
 
-        # update the cost for each cell
-        for row in range(len(self.planning_grid.grid)):
-            for column in range(len(self.planning_grid.grid[0])):
-                cell_pos = np.array([row, column])
-                self.cost_matrix[row][column] = np.linalg.norm(nearest_target_pos - cell_pos)
+            # create lists of visited and unvisited cells
 
-        # manage targets -> cost = 0
-        for target in self.planning_grid.targets_list:
-            self.cost_matrix[target[0]][target[1]] = 0.
+            # initialize all costs to infinity
 
-        # manage pedestrians -> cost = infinite
-        for ped in self.planning_grid.pedestrian_list:
-            self.cost_matrix[ped[0]][ped[1]] = math.inf
+            # for current cell, examine unvisited neighbors - if distance is shorter, update the table
 
-        # manage obstacles -> cost = infinite
-        for obs in self.planning_grid.obstacles_list:
-            self.cost_matrix[obs[0]][obs[1]] = math.inf
+            pass
+        else:
+            # find the nearest target by Euclidean Distance
+            min_dist = math.inf
+            min_idx = 0
+            for i, target in enumerate(self.planning_grid.targets_list):  # target is a tuple -> (row, column)
+                target_pos = np.array([target[0], target[1]])
+                dist = np.linalg.norm(target_pos - self.coords)
+                if dist < min_dist:
+                    min_dist = dist
+                    min_idx = i
+            nearest_target = self.planning_grid.targets_list[min_idx]
+            nearest_target_pos = np.array([nearest_target[0], nearest_target[1]])
+
+            # update the cost for each cell
+            for row in range(len(self.planning_grid.grid)):
+                for column in range(len(self.planning_grid.grid[0])):
+                    cell_pos = np.array([row, column])
+                    self.cost_matrix[row][column] = np.linalg.norm(nearest_target_pos - cell_pos)
+
+            # manage targets -> cost = 0
+            for target in self.planning_grid.targets_list:
+                self.cost_matrix[target[0]][target[1]] = 0.
+
+            # manage pedestrians -> cost = infinite
+            for ped in self.planning_grid.pedestrian_list:
+                self.cost_matrix[ped[0]][ped[1]] = math.inf
+
+            # manage obstacles -> cost = infinite
+            for obs in self.planning_grid.obstacles_list:
+                self.cost_matrix[obs[0]][obs[1]] = math.inf
 
     def plan_move(self):
         """

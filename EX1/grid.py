@@ -360,7 +360,7 @@ class CellGrid(Canvas):
                     print("Pedestrian reached target in:", pedestrian.total_time)
                     self.pedestrian_list.remove(pedestrian)
 
-            time.sleep(self.TIME_STEP)  # problem discretization
+            time.sleep(self.TIME_STEP)  # discretization
             self.update()   # graphical update of the grid
 
 
