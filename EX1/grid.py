@@ -366,7 +366,7 @@ class CellGrid(Canvas):
 
 if __name__ == "__main__":
     app = Tk()
-    grid = CellGrid(app,  50, 50, 10)
+    grid = CellGrid(app,  5, 5, 50)
     grid.pack()
     grid.focus_set()  # to receive inputs form keyboard
     app.mainloop()

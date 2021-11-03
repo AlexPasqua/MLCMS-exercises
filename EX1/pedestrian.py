@@ -42,8 +42,8 @@ class Pedestrian:
                     unvisited.append(cell_coords_as_str)
                     self.cost_matrix[i][j] = math.inf
                     if self.planning_grid.grid[i][j] == self.planning_grid.TARGET_CELL:
-                        target_x, target_y = i, j
-                        target_name = cell_coords_as_str
+                        target_x, target_y, target_name = i, j, cell_coords_as_str
+                        self.cost_matrix[i][j] = 0
 
             # create table: cell - distance from source - prev cell
             table = pd.DataFrame(columns=("cell", "dist_from_source", "prev_cell"))
@@ -52,7 +52,7 @@ class Pedestrian:
 
             # for current cell, examine unvisited neighbors - if distance is shorter, update the table
             curr_x, curr_y, curr_name = source_x, source_y, source_name
-            # table[table['cell'] == source_name]['dist_from_source'] = 0 # set distance from source to itself to 0
+            table.loc[table['cell'] == source_name, 'dist_from_source'] = 0  # set distance from source to itself to 0
             visited.append(curr_name)
             unvisited.remove(curr_name)
             for i in range(-1, 2):
@@ -61,13 +61,9 @@ class Pedestrian:
                         neigh_x, neigh_y, neigh_name = i, j, str(curr_x + i) + ',' + str(curr_y + j)
                         neigh_dist = 1.4 if abs(i) == abs(j) else 1.
                         dist_from_source = neigh_dist + table[table['cell'] == curr_name]['dist_from_source'].values[0]
-                        prev_cell = table[table['cell'] == neigh_name]['prev_cell'].values[0]
                         if dist_from_source < table[table['cell'] == neigh_name]['dist_from_source'].values[0]:
-                            prev_cell = curr_name
-                        table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
-                        table.loc[table['cell'] == neigh_name, 'prev_cell'] = prev_cell
-            print(table.head())
-            exit()
+                            table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
+                            table.loc[table['cell'] == neigh_name, 'prev_cell'] = curr_name
         else:
             # find the nearest target by Euclidean Distance
             min_dist = math.inf
