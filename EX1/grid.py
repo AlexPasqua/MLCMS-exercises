@@ -3,6 +3,7 @@ import time
 import random
 from planning_grid import PlanningGrid
 from pedestrian import Pedestrian
+import numpy as np
 
 """
 At the moment it is possible to edit the field of play as one prefers. Once the Run button is pressed the player can 
@@ -53,6 +54,7 @@ class Cell:
                 outline = self.EMPTY_COLOR_BORDER
 
             self.update_status(fill)
+            # print(self.borders[0], self.borders[1], self.borders[2], self.borders[3])
             self.master.create_rectangle(self.borders[0], self.borders[1], self.borders[2], self.borders[3], fill=fill,
                                          outline=outline)
 
@@ -120,7 +122,7 @@ class CellGrid(Canvas):
         # graphical grid init
         self.grid = []
         for row in range(row_number):
-            line = [Cell(self, x=row, y=column, size=cell_size) for column in range(column_number)]
+            line = [Cell(self, column, row, cell_size) for column in range(column_number)]
             self.grid.append(line)
 
         # memorize the cells that have been modified to avoid many switching of state during mouse motion.
@@ -149,8 +151,8 @@ class CellGrid(Canvas):
         :param event:
         :return: the row and columns where the event occurred
         """
-        row = int(event.x / self.cellSize)
-        column = int(event.y / self.cellSize)
+        column = int(event.x / self.cellSize)
+        row = int(event.y / self.cellSize)
         return row, column
 
     def handle_mouse_click(self, event):
@@ -366,7 +368,7 @@ class CellGrid(Canvas):
 
 if __name__ == "__main__":
     app = Tk()
-    grid = CellGrid(app,  5, 5, 50)
+    grid = CellGrid(app, 5, 5, 50)
     grid.pack()
     grid.focus_set()  # to receive inputs form keyboard
     app.mainloop()

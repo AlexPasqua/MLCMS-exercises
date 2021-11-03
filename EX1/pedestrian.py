@@ -51,7 +51,13 @@ class Pedestrian:
             table.loc[table['cell'] == source_name, 'dist_from_source'] = 0  # set distance from source to itself to 0
             found_target = False
             while not found_target:
-                curr_name = table[table['visited'] == False].sort_values(by='dist_from_source')['cell'].values[0]
+                try:
+                    curr_name = table[table['visited'] == False].sort_values(by='dist_from_source')['cell'].values[0]
+                except IndexError as e:
+                    print(e, '\n\n')
+                    print(table[table['visited'] == False], '\n\n')
+                    print(table)
+                    exit()
                 curr_x, curr_y = int(curr_name[0]), int(curr_name[-1])
                 table.loc[table['cell'] == curr_name, 'visited'] = True   # set source as visited
                 for i in range(-1, 2):
