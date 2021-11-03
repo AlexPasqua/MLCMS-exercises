@@ -48,6 +48,13 @@ class Pedestrian:
 
             # for current cell, examine unvisited neighbors - if distance is shorter, update the table
             table.loc[table['cell'] == source_name, 'dist_from_source'] = 0  # set distance from source to itself to 0
+            for i in range(len(self.planning_grid.grid)):
+                for j in range(len(self.planning_grid.grid[0])):
+                    cell_name = str(i) + ',' + str(j)
+                    if (self.planning_grid.grid[i][j] == self.planning_grid.PEDESTRIAN_CELL and cell_name != source_name) \
+                            or self.planning_grid.grid[i][j] == self.planning_grid.OBSTACLE_CELL:
+                        table.loc[table['cell'] == cell_name, 'dist_from_source'] = math.inf
+                        table.loc[table['cell'] == cell_name, 'visited'] = True
             found_target = False
             while not found_target:
                 curr_name = table[table['visited'] == False].sort_values(by='dist_from_source')['cell'].values[0]
@@ -58,22 +65,23 @@ class Pedestrian:
                     for j in range(-1, 2):
                         if 0 <= curr_row + i < len(self.grid.grid) and 0 <= curr_col + j < len(self.grid.grid[0]):
                             neigh_row, neigh_col, neigh_name = curr_row + i, curr_col + j, str(curr_row + i) + ',' + str(curr_col + j)
+                            neigh_dist = 1.4 if abs(i) == abs(j) else 1.
                             if self.planning_grid.grid[neigh_row][neigh_col] == self.planning_grid.TARGET_CELL:
-                                target_row, target_col, target_name = neigh_row, neigh_col, neigh_name
+                                candidate_target_dist = neigh_dist + table[table['cell'] == curr_name]['dist_from_source'].values[0]
+                                if found_target:  # target already found, update best target only if nearer
+                                    if target_dist > candidate_target_dist:
+                                        target_dist = candidate_target_dist
+                                        target_row, target_col, target_name = neigh_row, neigh_col, neigh_name
+                                else:  # target not found
+                                    target_dist = candidate_target_dist
+                                    target_row, target_col, target_name = neigh_row, neigh_col, neigh_name
                                 found_target = True
-                            elif (self.planning_grid.grid[neigh_row][neigh_col] == self.planning_grid.PEDESTRIAN_CELL
-                                    and neigh_name != str(self.row) + ',' + str(self.col)) \
-                                    or self.planning_grid.grid[neigh_row][neigh_col] == self.planning_grid.OBSTACLE_CELL:
-                                table.loc[table['cell'] == neigh_name, 'dist_from_source'] = math.inf
-                                table.loc[table['cell'] == neigh_name, 'visited'] = True
-                                continue
                             if neigh_name not in table[table['visited']]['cell']:   # if neighbor not visited
                                 neigh_dist = 1.4 if abs(i) == abs(j) else 1.
                                 dist_from_source = neigh_dist + table[table['cell'] == curr_name]['dist_from_source'].values[0]
                                 if dist_from_source < table[table['cell'] == neigh_name]['dist_from_source'].values[0]:
                                     table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
                                     table.loc[table['cell'] == neigh_name, 'prev_cell'] = curr_name
-
             # create path on the cost matrix to be used in "move"
             curr_cost = 0
             curr_name = target_name
@@ -84,9 +92,8 @@ class Pedestrian:
                 try:
                     curr_row, curr_col = curr_name.split(',')
                 except ValueError:
-                    print('curr_name:', curr_name)
-                    print('table: ', table)
-                    exit()
+                    # pedestrian is stuck, cannot see the end at the moment, stand still
+                    break
                 curr_row, curr_col = int(curr_row), int(curr_col)
                 self.cost_matrix[curr_row][curr_col] = curr_cost
         else:
