@@ -120,7 +120,7 @@ class CellGrid(Canvas):
         # graphical grid init
         self.grid = []
         for row in range(row_number):
-            line = [Cell(self, column, row, cell_size) for column in range(column_number)]
+            line = [Cell(self, x=row, y=column, size=cell_size) for column in range(column_number)]
             self.grid.append(line)
 
         # memorize the cells that have been modified to avoid many switching of state during mouse motion.
@@ -149,8 +149,8 @@ class CellGrid(Canvas):
         :param event:
         :return: the row and columns where the event occurred
         """
-        row = int(event.y / self.cellSize)
-        column = int(event.x / self.cellSize)
+        row = int(event.x / self.cellSize)
+        column = int(event.y / self.cellSize)
         return row, column
 
     def handle_mouse_click(self, event):

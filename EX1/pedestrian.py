@@ -13,7 +13,7 @@ class Pedestrian:
         self.y = cell.ord
         self.delta_x = None  # for planned movement in x axis
         self.delta_y = None  # for planned movement in y axis
-        self.coords = np.array([self.y, self.x])
+        self.coords = np.array([self.x, self.y])
         self.grid = grid  # graphical grid
         self.planning_grid = None  # planning grid
         self.cell = cell
@@ -35,31 +35,44 @@ class Pedestrian:
         if dijkstra:
             table = pd.DataFrame(columns=("cell", "dist_from_source", "prev_cell", "visited"))
 
-            # initialize all costs to infinity
             source_x, source_y, source_name = self.x, self.y, str(self.x) + ',' + str(self.y)
             for i in range(len(self.planning_grid.grid[:][0])):
                 for j in range(len(self.planning_grid.grid[0][:])):
                     cell_coords_as_str = str(i) + ',' + str(j)  # coords of a cell expressed as string (to give the cell a name)
                     table_row = {'cell': cell_coords_as_str, 'dist_from_source': math.inf, 'prev_cell': '', 'visited': False}
-                    table = table.append(table_row)
-                    self.cost_matrix[i][j] = math.inf
-                    if self.planning_grid.grid[i][j] == self.planning_grid.TARGET_CELL:
-                        target_x, target_y, target_name = i, j, cell_coords_as_str
-                        self.cost_matrix[i][j] = 0
+                    table = table.append(table_row, ignore_index=True)
+                    # self.cost_matrix[i][j] = math.inf
+                    # # TODO: assumes only 1 target -> may be problematic
+                    # if self.planning_grid.grid[i][j] == self.planning_grid.TARGET_CELL:
+                    #     target_x, target_y, target_name = i, j, cell_coords_as_str
+                    #     self.cost_matrix[i][j] = 0
 
             # for current cell, examine unvisited neighbors - if distance is shorter, update the table
-            curr_x, curr_y, curr_name = source_x, source_y, source_name
             table.loc[table['cell'] == source_name, 'dist_from_source'] = 0  # set distance from source to itself to 0
-            table.loc[table['cell'] == source_name, 'visited'] = True   # set source as visited
-            for i in range(-1, 2):
-                for j in range(-1, 2):
-                    if 0 <= curr_x + i < len(self.grid.grid[:][0]) and 0 <= curr_y + j < len(self.grid.grid[0][:]):
-                        neigh_x, neigh_y, neigh_name = i, j, str(curr_x + i) + ',' + str(curr_y + j)
-                        neigh_dist = 1.4 if abs(i) == abs(j) else 1.
-                        dist_from_source = neigh_dist + table[table['cell'] == curr_name]['dist_from_source'].values[0]
-                        if dist_from_source < table[table['cell'] == neigh_name]['dist_from_source'].values[0]:
-                            table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
-                            table.loc[table['cell'] == neigh_name, 'prev_cell'] = curr_name
+            found_target = False
+            while not found_target:
+                curr_name = table[table['visited'] == False].sort_values(by='dist_from_source')['cell'].values[0]
+                curr_x, curr_y = int(curr_name[0]), int(curr_name[-1])
+                table.loc[table['cell'] == curr_name, 'visited'] = True   # set source as visited
+                for i in range(-1, 2):
+                    for j in range(-1, 2):
+                        if 0 <= curr_x + i < len(self.grid.grid[:][0]) and 0 <= curr_y + j < len(self.grid.grid[0][:]):
+                            neigh_x, neigh_y, neigh_name = i, j, str(curr_x + i) + ',' + str(curr_y + j)
+                            if self.planning_grid.grid[neigh_x][neigh_y] == self.planning_grid.TARGET_CELL:
+                                target_x, target_y, target_name = neigh_x, neigh_y, neigh_name
+                                found_target = True
+                            elif self.planning_grid.grid[neigh_x][neigh_y] == self.planning_grid.PEDESTRIAN_CELL \
+                                    or self.planning_grid.grid[neigh_x][neigh_y] == self.planning_grid.OBSTACLE_CELL:
+                                table.loc[table['cell'] == neigh_name, 'dist_from_source'] = math.inf
+                                # table.loc[table['cell'] == neigh_name, 'visited'] = True    # to exclude this cell in the future (not necessary though)
+                            if neigh_name not in table[table['visited']]['cell']:   # if neighbor not visited
+                                neigh_dist = 1.4 if abs(i) == abs(j) else 1.
+                                dist_from_source = neigh_dist + table[table['cell'] == curr_name]['dist_from_source'].values[0]
+                                if dist_from_source < table[table['cell'] == neigh_name]['dist_from_source'].values[0]:
+                                    table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
+                                    table.loc[table['cell'] == neigh_name, 'prev_cell'] = curr_name
+            print("TARGET: ", target_name)
+            exit()
         else:
             # find the nearest target by Euclidean Distance
             min_dist = math.inf
