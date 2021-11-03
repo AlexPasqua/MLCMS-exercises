@@ -41,11 +41,7 @@ class Pedestrian:
                     cell_name = str(i) + ',' + str(j)  # row-col of a cell expressed as string (to give the cell a name)
                     table_row = {'cell': cell_name, 'dist_from_source': math.inf, 'prev_cell': '', 'visited': False}
                     table = table.append(table_row, ignore_index=True)
-                    # self.cost_matrix[i][j] = math.inf
-                    # # TODO: assumes only 1 target -> may be problematic
-                    # if self.planning_grid.grid[i][j] == self.planning_grid.TARGET_CELL:
-                    #     target_row, target_col, target_name = i, j, cell_name
-                    #     self.cost_matrix[i][j] = 0
+                    self.cost_matrix[i][j] = math.inf
 
             # for current cell, examine unvisited neighbors - if distance is shorter, update the table
             table.loc[table['cell'] == source_name, 'dist_from_source'] = 0  # set distance from source to itself to 0
@@ -74,6 +70,17 @@ class Pedestrian:
                                 if dist_from_source < table[table['cell'] == neigh_name]['dist_from_source'].values[0]:
                                     table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
                                     table.loc[table['cell'] == neigh_name, 'prev_cell'] = curr_name
+
+            # create path on the cost matrix to be used in "move"
+            curr_cost = 0
+            curr_name = target_name
+            self.cost_matrix[target_row][target_col] = curr_cost
+            while curr_name != source_name:
+                curr_cost += 1
+                curr_name = table[table['cell'] == curr_name]['prev_cell'].values[0]
+                curr_row, curr_col = curr_name.split(',')
+                curr_row, curr_col = int(curr_row), int(curr_col)
+                self.cost_matrix[curr_row][curr_col] = curr_cost
         else:
             # find the nearest target by Euclidean Distance
             min_dist = math.inf
@@ -111,45 +118,46 @@ class Pedestrian:
         :return:
         """
         surrounding_costs = np.zeros(shape=(3, 3))
-        for i in range(-1, 2):
-            for j in range(-1, 2):
-                if not (i == 0 and j == 0):  # Pedestrian is in the center -> (0,0)
+        for delta_row in range(-1, 2):
+            for delta_col in range(-1, 2):
+                if not (delta_row == 0 and delta_col == 0):  # Pedestrian is in the center -> (0,0)
                     # check for borders and construct surrounding cost matrix
-                    if 0 <= self.col + i < len(self.grid.grid[0]) and 0 <= self.row + j < len(self.grid.grid[:][0]):
-                        surrounding_costs[i + 1][j + 1] = self.cost_matrix[self.row + j][self.col + i]
+                    if 0 <= self.col + delta_col < len(self.grid.grid[0]) and 0 <= self.row + delta_row < len(self.grid.grid[:][0]):
+                        surrounding_costs[delta_row + 1][delta_col + 1] = self.cost_matrix[self.row + delta_row][self.col + delta_col]
                     else:
-                        surrounding_costs[i + 1][j + 1] = math.inf  # if out of the matrix
+                        surrounding_costs[delta_row + 1][delta_col + 1] = math.inf  # if out of the matrix
                 else:
-                    surrounding_costs[i + 1][j + 1] = math.inf  # cost of not moving is high
-        min_cost_x, min_cost_y = np.unravel_index(surrounding_costs.argmin(), surrounding_costs.shape)
+                    surrounding_costs[delta_row + 1][delta_col + 1] = math.inf  # cost of not moving is high
+        min_cost_row, min_cost_col = np.unravel_index(surrounding_costs.argmin(), surrounding_costs.shape)
 
         # if all the surrounding cells have an infinite cost
         # (e.g. pedestrian surrounded by obstacles/other pedestrians) then don't move
         if surrounding_costs[0, 0] == math.inf and np.all(surrounding_costs == surrounding_costs[0, 0]):
             return 0, 0
-        return min_cost_x - 1, min_cost_y - 1
 
-    def actuate_move(self, grid, delta_x, delta_y, planning=True):
+        return min_cost_row - 1, min_cost_col - 1
+
+    def actuate_move(self, grid, delta_row, delta_col, planning=True):
         """
         move the Pedestrian either in the planning grid or in the graphical grid
         :param grid:
-        :param delta_x:
-        :param delta_y:
+        :param delta_col:
+        :param delta_row:
         :param planning:
         :return:
         """
         if planning:
             self.planning_grid.grid[self.row][self.col] = self.planning_grid.BLANK_CELL  # update current cell
             # if the next cell is not a Target then move there, otherwise remove the Pedestrian
-            if self.planning_grid.grid[self.row + delta_y][self.col + delta_x] != self.planning_grid.TARGET_CELL:
-                self.planning_grid.grid[self.row + delta_y][self.col + delta_x] = self.planning_grid.PEDESTRIAN_CELL
+            if self.planning_grid.grid[self.row + delta_row][self.col + delta_col] != self.planning_grid.TARGET_CELL:
+                self.planning_grid.grid[self.row + delta_row][self.col + delta_col] = self.planning_grid.PEDESTRIAN_CELL
                 self.planning_grid.update_pedestrian_list((self.row, self.col),
                                                           (self.row + self.delta_row, self.col + self.delta_col))
             else:
                 self.planning_grid.pedestrian_list.remove((self.row, self.col))
 
         else:
-            candidate_cell = grid[self.row + delta_y][self.col + delta_x]
+            candidate_cell = grid[self.row + delta_row][self.col + delta_col]
             # make the current cell white
             grid[self.row][self.col].switch()
             grid[self.row][self.col].draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
@@ -169,10 +177,10 @@ class Pedestrian:
         """
         if self.active:
             # plan the move
-            self.delta_col, self.delta_row = self.plan_move()
+            self.delta_row, self.delta_col = self.plan_move()
 
             # move in the planning grid
-            self.actuate_move(self.planning_grid.grid, self.delta_col, self.delta_row, planning=True)
+            self.actuate_move(self.planning_grid.grid, self.delta_row, self.delta_col, planning=True)
 
             # if move is diagonal, set waiting time to 1.4s, otherwise to 1.0s
             self.waiting_time = 1.4 if abs(self.delta_col) - abs(self.delta_row) == 0 else 1.0
@@ -189,7 +197,7 @@ class Pedestrian:
             self.total_time += self.grid.TIME_STEP
             if round(self.waiting_time, 2) <= 0:
                 # if waiting time is over, move, set to active and update position
-                self.actuate_move(self.grid.grid, self.delta_col, self.delta_row, planning=False)
+                self.actuate_move(self.grid.grid, self.delta_row, self.delta_col, planning=False)
                 self.col, self.row = self.col + self.delta_col, self.row + self.delta_row
                 self.active = True
 
