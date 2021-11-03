@@ -30,6 +30,9 @@ class Pedestrian:
         :param planning_grid: (PlanningGrid object) grid used to plan the move where cells that will be occupied result occupied immediately
         :param dijkstra: if True, use Dijkstra algorithm for the shortest path, otherwise use simply euclidean distance
         """
+        if not self.active:
+            return
+
         self.planning_grid = planning_grid
 
         if dijkstra:
@@ -82,6 +85,7 @@ class Pedestrian:
                     curr_row, curr_col = curr_name.split(',')
                 except ValueError:
                     print('curr_name:', curr_name)
+                    print('table: ', table)
                     exit()
                 curr_row, curr_col = int(curr_row), int(curr_col)
                 self.cost_matrix[curr_row][curr_col] = curr_cost
