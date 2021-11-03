@@ -122,7 +122,7 @@ class CellGrid(Canvas):
         # graphical grid init
         self.grid = []
         for row in range(row_number):
-            line = [Cell(self, column, row, cell_size) for column in range(column_number)]
+            line = [Cell(self, x=column, y=row, size=cell_size) for column in range(column_number)]
             self.grid.append(line)
 
         # memorize the cells that have been modified to avoid many switching of state during mouse motion.

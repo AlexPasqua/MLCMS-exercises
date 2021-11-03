@@ -9,11 +9,11 @@ class Pedestrian:
     """
 
     def __init__(self, grid, cell):
-        self.x = cell.abs
-        self.y = cell.ord
-        self.delta_x = None  # for planned movement in x axis
-        self.delta_y = None  # for planned movement in y axis
-        self.coords = np.array([self.x, self.y])
+        self.row = cell.ord
+        self.col = cell.abs
+        self.delta_row = None  # for planned movement in row axis
+        self.delta_col = None  # for planned movement in col axis
+        self.coords = np.array([self.row, self.col])
         self.grid = grid  # graphical grid
         self.planning_grid = None  # planning grid
         self.cell = cell
@@ -35,50 +35,45 @@ class Pedestrian:
         if dijkstra:
             table = pd.DataFrame(columns=("cell", "dist_from_source", "prev_cell", "visited"))
 
-            source_x, source_y, source_name = self.x, self.y, str(self.x) + ',' + str(self.y)
-            for i in range(len(self.planning_grid.grid[:][0])):
-                for j in range(len(self.planning_grid.grid[0][:])):
-                    cell_coords_as_str = str(i) + ',' + str(j)  # coords of a cell expressed as string (to give the cell a name)
-                    table_row = {'cell': cell_coords_as_str, 'dist_from_source': math.inf, 'prev_cell': '', 'visited': False}
+            source_col, source_row, source_name = self.col, self.row, str(self.row) + ',' + str(self.col)
+            for i in range(len(self.planning_grid.grid)):
+                for j in range(len(self.planning_grid.grid[0])):
+                    cell_name = str(i) + ',' + str(j)  # row-col of a cell expressed as string (to give the cell a name)
+                    table_row = {'cell': cell_name, 'dist_from_source': math.inf, 'prev_cell': '', 'visited': False}
                     table = table.append(table_row, ignore_index=True)
                     # self.cost_matrix[i][j] = math.inf
                     # # TODO: assumes only 1 target -> may be problematic
                     # if self.planning_grid.grid[i][j] == self.planning_grid.TARGET_CELL:
-                    #     target_x, target_y, target_name = i, j, cell_coords_as_str
+                    #     target_row, target_col, target_name = i, j, cell_name
                     #     self.cost_matrix[i][j] = 0
 
             # for current cell, examine unvisited neighbors - if distance is shorter, update the table
             table.loc[table['cell'] == source_name, 'dist_from_source'] = 0  # set distance from source to itself to 0
             found_target = False
             while not found_target:
-                try:
-                    curr_name = table[table['visited'] == False].sort_values(by='dist_from_source')['cell'].values[0]
-                except IndexError as e:
-                    print(e, '\n\n')
-                    print(table[table['visited'] == False], '\n\n')
-                    print(table)
-                    exit()
-                curr_x, curr_y = int(curr_name[0]), int(curr_name[-1])
+                curr_name = table[table['visited'] == False].sort_values(by='dist_from_source')['cell'].values[0]
+                curr_row, curr_col = curr_name.split(',')
+                curr_row, curr_col = int(curr_row), int(curr_col)
                 table.loc[table['cell'] == curr_name, 'visited'] = True   # set source as visited
                 for i in range(-1, 2):
                     for j in range(-1, 2):
-                        if 0 <= curr_x + i < len(self.grid.grid[:][0]) and 0 <= curr_y + j < len(self.grid.grid[0][:]):
-                            neigh_x, neigh_y, neigh_name = i, j, str(curr_x + i) + ',' + str(curr_y + j)
-                            if self.planning_grid.grid[neigh_x][neigh_y] == self.planning_grid.TARGET_CELL:
-                                target_x, target_y, target_name = neigh_x, neigh_y, neigh_name
+                        if 0 <= curr_row + i < len(self.grid.grid) and 0 <= curr_col + j < len(self.grid.grid[0]):
+                            neigh_row, neigh_col, neigh_name = curr_row + i, curr_col + j, str(curr_row + i) + ',' + str(curr_col + j)
+                            if self.planning_grid.grid[neigh_row][neigh_col] == self.planning_grid.TARGET_CELL:
+                                target_row, target_col, target_name = neigh_row, neigh_col, neigh_name
                                 found_target = True
-                            elif self.planning_grid.grid[neigh_x][neigh_y] == self.planning_grid.PEDESTRIAN_CELL \
-                                    or self.planning_grid.grid[neigh_x][neigh_y] == self.planning_grid.OBSTACLE_CELL:
+                            elif (self.planning_grid.grid[neigh_row][neigh_col] == self.planning_grid.PEDESTRIAN_CELL
+                                    and neigh_name != str(self.row) + ',' + str(self.col)) \
+                                    or self.planning_grid.grid[neigh_row][neigh_col] == self.planning_grid.OBSTACLE_CELL:
                                 table.loc[table['cell'] == neigh_name, 'dist_from_source'] = math.inf
-                                # table.loc[table['cell'] == neigh_name, 'visited'] = True    # to exclude this cell in the future (not necessary though)
+                                table.loc[table['cell'] == neigh_name, 'visited'] = True
+                                continue
                             if neigh_name not in table[table['visited']]['cell']:   # if neighbor not visited
                                 neigh_dist = 1.4 if abs(i) == abs(j) else 1.
                                 dist_from_source = neigh_dist + table[table['cell'] == curr_name]['dist_from_source'].values[0]
                                 if dist_from_source < table[table['cell'] == neigh_name]['dist_from_source'].values[0]:
                                     table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
                                     table.loc[table['cell'] == neigh_name, 'prev_cell'] = curr_name
-            print("TARGET: ", target_name)
-            exit()
         else:
             # find the nearest target by Euclidean Distance
             min_dist = math.inf
@@ -120,8 +115,8 @@ class Pedestrian:
             for j in range(-1, 2):
                 if not (i == 0 and j == 0):  # Pedestrian is in the center -> (0,0)
                     # check for borders and construct surrounding cost matrix
-                    if 0 <= self.x + i < len(self.grid.grid[0]) and 0 <= self.y + j < len( self.grid.grid[:][0]):
-                        surrounding_costs[i + 1][j + 1] = self.cost_matrix[self.y + j][self.x + i]
+                    if 0 <= self.col + i < len(self.grid.grid[0]) and 0 <= self.row + j < len(self.grid.grid[:][0]):
+                        surrounding_costs[i + 1][j + 1] = self.cost_matrix[self.row + j][self.col + i]
                     else:
                         surrounding_costs[i + 1][j + 1] = math.inf  # if out of the matrix
                 else:
@@ -144,20 +139,20 @@ class Pedestrian:
         :return:
         """
         if planning:
-            self.planning_grid.grid[self.y][self.x] = self.planning_grid.BLANK_CELL  # update current cell
+            self.planning_grid.grid[self.row][self.col] = self.planning_grid.BLANK_CELL  # update current cell
             # if the next cell is not a Target then move there, otherwise remove the Pedestrian
-            if self.planning_grid.grid[self.y + delta_y][self.x + delta_x] != self.planning_grid.TARGET_CELL:
-                self.planning_grid.grid[self.y + delta_y][self.x + delta_x] = self.planning_grid.PEDESTRIAN_CELL
-                self.planning_grid.update_pedestrian_list((self.y, self.x),
-                                                          (self.y + self.delta_y, self.x + self.delta_x))
+            if self.planning_grid.grid[self.row + delta_y][self.col + delta_x] != self.planning_grid.TARGET_CELL:
+                self.planning_grid.grid[self.row + delta_y][self.col + delta_x] = self.planning_grid.PEDESTRIAN_CELL
+                self.planning_grid.update_pedestrian_list((self.row, self.col),
+                                                          (self.row + self.delta_row, self.col + self.delta_col))
             else:
-                self.planning_grid.pedestrian_list.remove((self.y, self.x))
+                self.planning_grid.pedestrian_list.remove((self.row, self.col))
 
         else:
-            candidate_cell = grid[self.y + delta_y][self.x + delta_x]
+            candidate_cell = grid[self.row + delta_y][self.col + delta_x]
             # make the current cell white
-            grid[self.y][self.x].switch()
-            grid[self.y][self.x].draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
+            grid[self.row][self.col].switch()
+            grid[self.row][self.col].draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
 
             # color the cell we're going to (if it is not a target)
             if not candidate_cell.status == "Target":
@@ -174,19 +169,19 @@ class Pedestrian:
         """
         if self.active:
             # plan the move
-            self.delta_x, self.delta_y = self.plan_move()
+            self.delta_col, self.delta_row = self.plan_move()
 
             # move in the planning grid
-            self.actuate_move(self.planning_grid.grid, self.delta_x, self.delta_y, planning=True)
+            self.actuate_move(self.planning_grid.grid, self.delta_col, self.delta_row, planning=True)
 
             # if move is diagonal, set waiting time to 1.4s, otherwise to 1.0s
-            self.waiting_time = 1.4 if abs(self.delta_x) - abs(self.delta_y) == 0 else 1.0
+            self.waiting_time = 1.4 if abs(self.delta_col) - abs(self.delta_row) == 0 else 1.0
 
             # set pedestrian to sleep
             self.active = False
 
             # if the pedestrian decided not to move, it stays active
-            if self.delta_x == self.delta_y == 0:
+            if self.delta_col == self.delta_row == 0:
                 self.active = True
         else:
             # decrease the waiting time
@@ -194,8 +189,8 @@ class Pedestrian:
             self.total_time += self.grid.TIME_STEP
             if round(self.waiting_time, 2) <= 0:
                 # if waiting time is over, move, set to active and update position
-                self.actuate_move(self.grid.grid, self.delta_x, self.delta_y, planning=False)
-                self.x, self.y = self.x + self.delta_x, self.y + self.delta_y
+                self.actuate_move(self.grid.grid, self.delta_col, self.delta_row, planning=False)
+                self.col, self.row = self.col + self.delta_col, self.row + self.delta_row
                 self.active = True
 
         return self.planning_grid, self.goal_achieved
