@@ -78,7 +78,11 @@ class Pedestrian:
             while curr_name != source_name:
                 curr_cost += 1
                 curr_name = table[table['cell'] == curr_name]['prev_cell'].values[0]
-                curr_row, curr_col = curr_name.split(',')
+                try:
+                    curr_row, curr_col = curr_name.split(',')
+                except ValueError:
+                    print('curr_name:', curr_name)
+                    exit()
                 curr_row, curr_col = int(curr_row), int(curr_col)
                 self.cost_matrix[curr_row][curr_col] = curr_cost
         else:
