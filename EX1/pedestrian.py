@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import math
 import pandas as pd
@@ -46,15 +48,16 @@ class Pedestrian:
                     table = table.append(table_row, ignore_index=True)
                     self.cost_matrix[i][j] = math.inf
 
-            # for current cell, examine unvisited neighbors - if distance is shorter, update the table
             table.loc[table['cell'] == source_name, 'dist_from_source'] = 0  # set distance from source to itself to 0
             for i in range(len(self.planning_grid.grid)):
                 for j in range(len(self.planning_grid.grid[0])):
                     cell_name = str(i) + ',' + str(j)
-                    if (self.planning_grid.grid[i][j] == self.planning_grid.PEDESTRIAN_CELL and cell_name != source_name) \
-                            or self.planning_grid.grid[i][j] == self.planning_grid.OBSTACLE_CELL:
+                    # if (self.planning_grid.grid[i][j] == self.planning_grid.PEDESTRIAN_CELL and cell_name != source_name) \
+                    #         or self.planning_grid.grid[i][j] == self.planning_grid.OBSTACLE_CELL:
+                    if self.planning_grid.grid[i][j] == self.planning_grid.OBSTACLE_CELL:
                         table.loc[table['cell'] == cell_name, 'dist_from_source'] = math.inf
                         table.loc[table['cell'] == cell_name, 'visited'] = True
+
             found_target = False
             while not found_target:
                 curr_name = table[table['visited'] == False].sort_values(by='dist_from_source')['cell'].values[0]
@@ -77,11 +80,11 @@ class Pedestrian:
                                     target_row, target_col, target_name = neigh_row, neigh_col, neigh_name
                                 found_target = True
                             if neigh_name not in table[table['visited']]['cell']:   # if neighbor not visited
-                                neigh_dist = 1.4 if abs(i) == abs(j) else 1.
                                 dist_from_source = neigh_dist + table[table['cell'] == curr_name]['dist_from_source'].values[0]
                                 if dist_from_source < table[table['cell'] == neigh_name]['dist_from_source'].values[0]:
                                     table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
                                     table.loc[table['cell'] == neigh_name, 'prev_cell'] = curr_name
+
             # create path on the cost matrix to be used in "move"
             curr_cost = 0
             curr_name = target_name
@@ -119,13 +122,13 @@ class Pedestrian:
             for target in self.planning_grid.targets_list:
                 self.cost_matrix[target[0]][target[1]] = 0.
 
-            # manage pedestrians -> cost = infinite
-            for ped in self.planning_grid.pedestrian_list:
-                self.cost_matrix[ped[0]][ped[1]] = math.inf
-
             # manage obstacles -> cost = infinite
             for obs in self.planning_grid.obstacles_list:
                 self.cost_matrix[obs[0]][obs[1]] = math.inf
+
+        # manage pedestrians -> cost = infinite
+        for ped in self.planning_grid.pedestrian_list:
+            self.cost_matrix[ped[0]][ped[1]] = math.inf
 
     def plan_move(self):
         """
@@ -205,6 +208,7 @@ class Pedestrian:
 
             # if the pedestrian decided not to move, it stays active
             if self.delta_col == self.delta_row == 0:
+                self.total_time += self.grid.TIME_STEP
                 self.active = True
         else:
             # decrease the waiting time
