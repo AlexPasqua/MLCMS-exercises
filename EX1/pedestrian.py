@@ -7,6 +7,7 @@ class Pedestrian:
     """
     Object wrapping around Cell, allows for the agent's planning
     """
+
     def __init__(self, grid, cell):
         self.x = cell.abs
         self.y = cell.ord
@@ -32,15 +33,41 @@ class Pedestrian:
         self.planning_grid = planning_grid
 
         if dijkstra:
+            # create lists of visited and unvisited cells initialize all costs to infinity
+            visited, unvisited = [], []
+            source_x, source_y, source_name = self.x, self.y, str(self.x) + ',' + str(self.y)
+            for i in range(len(self.planning_grid.grid[:][0])):
+                for j in range(len(self.planning_grid.grid[0][:])):
+                    cell_coords_as_str = str(i) + ',' + str(j)  # coords of a cell expressed as string (to give the cell a name)
+                    unvisited.append(cell_coords_as_str)
+                    self.cost_matrix[i][j] = math.inf
+                    if self.planning_grid.grid[i][j] == self.planning_grid.TARGET_CELL:
+                        target_x, target_y = i, j
+                        target_name = cell_coords_as_str
+
             # create table: cell - distance from source - prev cell
-
-            # create lists of visited and unvisited cells
-
-            # initialize all costs to infinity
+            table = pd.DataFrame(columns=("cell", "dist_from_source", "prev_cell"))
+            for cell in unvisited:
+                table = table.append({'cell': cell, 'dist_from_source': math.inf, 'prev_cell': '-'}, ignore_index=True)
 
             # for current cell, examine unvisited neighbors - if distance is shorter, update the table
-
-            pass
+            curr_x, curr_y, curr_name = source_x, source_y, source_name
+            # table[table['cell'] == source_name]['dist_from_source'] = 0 # set distance from source to itself to 0
+            visited.append(curr_name)
+            unvisited.remove(curr_name)
+            for i in range(-1, 2):
+                for j in range(-1, 2):
+                    if 0 <= curr_x + i < len(self.grid.grid[:][0]) and 0 <= curr_y + j < len(self.grid.grid[0][:]):
+                        neigh_x, neigh_y, neigh_name = i, j, str(curr_x + i) + ',' + str(curr_y + j)
+                        neigh_dist = 1.4 if abs(i) == abs(j) else 1.
+                        dist_from_source = neigh_dist + table[table['cell'] == curr_name]['dist_from_source'].values[0]
+                        prev_cell = table[table['cell'] == neigh_name]['prev_cell'].values[0]
+                        if dist_from_source < table[table['cell'] == neigh_name]['dist_from_source'].values[0]:
+                            prev_cell = curr_name
+                        table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
+                        table.loc[table['cell'] == neigh_name, 'prev_cell'] = prev_cell
+            print(table.head())
+            exit()
         else:
             # find the nearest target by Euclidean Distance
             min_dist = math.inf
@@ -82,10 +109,10 @@ class Pedestrian:
             for j in range(-1, 2):
                 if not (i == 0 and j == 0):  # Pedestrian is in the center -> (0,0)
                     # check for borders and construct surrounding cost matrix
-                    if 0 <= self.x + i < len(self.planning_grid.grid[0]) and 0 <= self.y + j < len(self.planning_grid.grid[:][0]):
+                    if 0 <= self.x + i < len(self.grid.grid[0]) and 0 <= self.y + j < len( self.grid.grid[:][0]):
                         surrounding_costs[i + 1][j + 1] = self.cost_matrix[self.y + j][self.x + i]
                     else:
-                        surrounding_costs[i + 1][j + 1] = math.inf # if out of the matrix
+                        surrounding_costs[i + 1][j + 1] = math.inf  # if out of the matrix
                 else:
                     surrounding_costs[i + 1][j + 1] = math.inf  # cost of not moving is high
         min_cost_x, min_cost_y = np.unravel_index(surrounding_costs.argmin(), surrounding_costs.shape)
