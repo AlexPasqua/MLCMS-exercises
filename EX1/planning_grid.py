@@ -4,6 +4,8 @@ class PlanningGrid:
     """
     An object helping with the simulation handling, keeping it simpler to manage wrt using directly the graphical grid
     """
+
+    # codes to indicate what kind of object is present in a cell
     BLANK_CELL = 0
     PEDESTRIAN_CELL = 1
     OBSTACLE_CELL = 2
@@ -43,8 +45,8 @@ class PlanningGrid:
     def update_pedestrian_list(self, old_coord, new_coord):
         """
         Update a particular pedestrian position due to movement
-        :param old_coord:
-        :param new_coord:
+        :param old_coord: past coordinates of the pedestrian, to be removed since the pedestrian is not there anymore
+        :param new_coord: new coordinates of the pedestrian, to be added to the list
         :return:
         """
         self.pedestrian_list.remove(old_coord)

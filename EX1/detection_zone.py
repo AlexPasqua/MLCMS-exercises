@@ -41,15 +41,17 @@ def get_final_metrics(detection_zones):
 
 class DetectionZone:
     """
-        Object to handle measurements in particular zones of the grid
-        The measurements are the average density and speed over the whole simulations, making it possible to also
-        measure the flow (as density*speed)
+    Object to handle measurements in particular zones of the grid
+    The measurements are the average density and speed over the whole simulations, making it possible to also
+    measure the flow (as density*speed)
     """
 
     def __init__(self, grid, min_row, max_row, min_col, max_col):
-        self.grid = grid
+        self.grid = grid    # the grid to which the detection zone belongs
         self.min_row, self.max_row, self.min_col, self.max_col = min_row, max_row, min_col, max_col
         self.area = (self.max_row - self.min_row + 1) * (self.max_col - self.min_col + 1)
+
+        # save the cells of the grid belonging to the detection zone
         self.cells = []
         for i in range(self.min_row, self.max_row + 1):
             for j in range(self.min_col, self.max_col + 1):
@@ -73,7 +75,6 @@ class DetectionZone:
         it might happen (for example to the leftmost detection zone) that from a certain point on there are not
         pedestrians traversing the zone anymore. This leads to a long trail of 0 density values. Getting rid of
         these maintains the simulation in the RiMEA 4 desired situation.
-        :return:
         """
         to_trim = 0
         for d in reversed(self.densities):
@@ -85,7 +86,6 @@ class DetectionZone:
     def draw(self):
         """
         color the detection zone, paying attention to not paint over pedestrians
-        :return:
         """
         for cell in self.cells:
             cell_to_color = self.grid.grid[cell[0]][cell[1]]
@@ -98,7 +98,6 @@ class DetectionZone:
         """
         calculates the density inside a detection zone in a determinate screenshot in time.
         the calculation is simply the number of Pedestrians inside the zone divided by the area
-        :return:
         """
         num_pedestrians = 0
         for cell in self.cells:
@@ -110,15 +109,12 @@ class DetectionZone:
         """
         when a pedestrian exits from a detection zone, he will send the DetectionZone his speed in travelling it
         :param speed: pedestrian speed, calculate as space in zone / time in zone
-        :return:
         """
-        print(self, "Hey i got some speed here: ", speed)
         self.speeds.append(speed)
 
     def update_resulting_measures(self):
         """
         to be called once the simulation is over to get the overall measurements
-        :return:
         """
         self.avg_density = sum(self.densities) / len(self.densities)
         self.avg_speed = sum(self.speeds) / len(self.speeds)
