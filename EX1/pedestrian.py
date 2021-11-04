@@ -10,8 +10,7 @@ class Pedestrian:
     Object wrapping around Cell, allows for the agent's planning
     """
 
-    def __init__(self, grid, cell, speed=1.0, grid_too_big=False):
-        self.grid_too_big=grid_too_big
+    def __init__(self, grid, cell, speed=1.0):
         self.row = cell.ord
         self.col = cell.abs
         self.delta_row = None  # for planned movement in row axis
@@ -40,10 +39,7 @@ class Pedestrian:
 
         self.planning_grid = planning_grid
 
-        # start_time = time.time()
-
         if dijkstra:
-            init_df = time.time()
             table = pd.DataFrame(columns=("cell", "dist_from_source", "prev_cell", "visited"))
 
             source_col, source_row, source_name = self.col, self.row, str(self.row) + ',' + str(self.col)
@@ -53,9 +49,7 @@ class Pedestrian:
                     table_row = {'cell': cell_name, 'dist_from_source': math.inf, 'prev_cell': '', 'visited': False}
                     table = table.append(table_row, ignore_index=True)
                     self.cost_matrix[i][j] = math.inf
-            # print("INIT_DF:", time.time()-init_df)
 
-            # obst_ped_init = time.time()
             table.loc[table['cell'] == source_name, 'dist_from_source'] = 0  # set distance from source to itself to 0
             for i in range(len(self.planning_grid.grid)):
                 for j in range(len(self.planning_grid.grid[0])):
@@ -63,26 +57,16 @@ class Pedestrian:
                     if self.planning_grid.grid[i][j] == self.planning_grid.OBSTACLE_CELL:
                         table.loc[table['cell'] == cell_name, 'dist_from_source'] = math.inf
                         table.loc[table['cell'] == cell_name, 'visited'] = True
-            # print("INIT OBST AND PED:", time.time()-obst_ped_init)
 
             found_target = False
-            # while_loop = time.time()
-
-            # cycle_counter = 0
-            # sorting_time = 0
-            # working_time = 0
-
             while not found_target:
-                # sorting_time_internal = time.time()
                 non_visited = table[table['visited'] == False]
                 curr_name = non_visited[(non_visited['dist_from_source'] == min(non_visited['dist_from_source']))]['cell'].values[0]
 
                 # curr_name = table[table['visited'] == False].sort_values(by='dist_from_source')['cell'].values[0]
-                # sorting_time += time.time() - sorting_time_internal
                 curr_row, curr_col = curr_name.split(',')
                 curr_row, curr_col = int(curr_row), int(curr_col)
                 table.loc[table['cell'] == curr_name, 'visited'] = True   # set source as visited
-                # working_time_internal = time.time()
                 for i in range(-1, 2):
                     for j in range(-1, 2):
                         curr_cell_dist = table[table['cell'] == curr_name]['dist_from_source'].values[0]
@@ -104,13 +88,6 @@ class Pedestrian:
                                 if dist_from_source < table[table['cell'] == neigh_name]['dist_from_source'].values[0]:
                                     table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
                                     table.loc[table['cell'] == neigh_name, 'prev_cell'] = curr_name
-            #     working_time += time.time() - working_time_internal
-            #     cycle_counter += 1
-            # print("SORTING_TIME AVG:", sorting_time / cycle_counter, "SORTING TIME:", sorting_time)
-            # print("WORKING TIME AVG:", working_time / cycle_counter, "WORKING_TIME:", working_time)
-            # print("WHILE:", time.time()-while_loop)
-            #
-            # path_create = time.time()
             # create path on the cost matrix to be used in "move"
             curr_cost = 0
             curr_name = target_name
@@ -125,8 +102,6 @@ class Pedestrian:
                     break
                 curr_row, curr_col = int(curr_row), int(curr_col)
                 self.cost_matrix[curr_row][curr_col] = curr_cost
-            # print("PATH CREATION:", time.time()-path_create)
-            # print("DIJKSTRA:", time.time()-start_time)
         else:
             # find the nearest target by Euclidean Distance
             min_dist = math.inf
@@ -153,7 +128,6 @@ class Pedestrian:
             # manage obstacles -> cost = infinite
             for obs in self.planning_grid.obstacles_list:
                 self.cost_matrix[obs[0]][obs[1]] = math.inf
-            # print("NON DIJKSTRA:", time.time()-start_time)
 
         # manage pedestrians -> cost = infinite
         for ped in self.planning_grid.pedestrian_list:
@@ -206,15 +180,13 @@ class Pedestrian:
         else:
             candidate_cell = grid[self.row + delta_row][self.col + delta_col]
             # make the current cell white
-            if not self.grid_too_big:
-                grid[self.row][self.col].switch()
-                grid[self.row][self.col].draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
+            grid[self.row][self.col].switch()
+            grid[self.row][self.col].draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
 
             # color the cell we're going to (if it is not a target)
             if not candidate_cell.status == "Target":
-                if not self.grid_too_big:
-                    candidate_cell.switch()
-                    candidate_cell.draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
+                candidate_cell.switch()
+                candidate_cell.draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
             else:
                 # reached the objective
                 self.goal_achieved = True

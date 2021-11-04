@@ -124,9 +124,6 @@ class CellGrid(Canvas):
         self.buttons = []
         self.init_buttons()
 
-        self.MAX_GRID_SIZE = 100
-        self.grid_too_big = row_number >= self.MAX_GRID_SIZE
-
         # graphical grid init
         self.grid = []
         column_number = row_number
@@ -147,8 +144,7 @@ class CellGrid(Canvas):
         self.bind("<Escape>", close_app)
 
         # draw grid
-        if not self.grid_too_big:
-            self.draw_empty_grid()
+        self.draw_empty_grid()
 
     def draw_empty_grid(self):
         for row in self.grid:
@@ -365,8 +361,7 @@ class CellGrid(Canvas):
 
         # create a Pedestrian list to access useful methods ("if" used for RiMEA Test 7)
         if self.pedestrian_list is None:
-            self.pedestrian_list = [Pedestrian(self, cell, grid_too_big=self.grid_too_big) for cell in
-                                    self.pedestrian_cell_list]
+            self.pedestrian_list = [Pedestrian(self, cell) for cell in self.pedestrian_cell_list]
 
         # continue simulating until all pedestrian have not reached a target
         activate_dijkstra = True if self.dijkstra_enabled.get() == 1 else False
@@ -383,8 +378,7 @@ class CellGrid(Canvas):
                     self.pedestrian_list.remove(pedestrian)
 
             time.sleep(self.TIME_STEP)  # discretization
-            if not self.grid_too_big:
-                self.update()  # graphical update of the grid
+            self.update()  # graphical update of the grid
 
 
 if __name__ == "__main__":
