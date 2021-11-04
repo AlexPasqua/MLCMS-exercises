@@ -2,7 +2,7 @@ from tkinter import *
 import time
 import random
 from planning_grid import PlanningGrid
-from pedestrian import Pedestrian
+from pedestrian import *
 from cell import *
 from detection_zone import *
 
@@ -313,6 +313,8 @@ class CellGrid(Canvas):
                 update_densities(self.detection_zones)
 
             self.update()  # graphical update of the grid
+
+        self.pedestrian_list = None     # necessary in case of multiple simulations without closing the app
 
         if self.is_rimea_4:
             get_final_metrics(self.detection_zones)
