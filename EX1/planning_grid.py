@@ -1,5 +1,3 @@
-
-
 class PlanningGrid:
     """
     An object helping with the simulation handling, keeping it simpler to manage wrt using directly the graphical grid
