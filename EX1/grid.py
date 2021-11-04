@@ -303,7 +303,7 @@ class CellGrid(Canvas):
 
         # create a Pedestrian list to access useful methods ("if" used for RiMEA Test 7)
         if self.pedestrian_list is None:
-            self.pedestrian_list = [Pedestrian(self, cell) for cell in self.pedestrian_cell_list]
+            self.pedestrian_list = [Pedestrian(self, cell, is_rimea=self.is_rimea_4) for cell in self.pedestrian_cell_list]
 
         # continue simulating until all pedestrian have not reached a target
         activate_dijkstra = True if self.dijkstra_enabled.get() == 1 else False
@@ -324,6 +324,8 @@ class CellGrid(Canvas):
                 draw_detection_zones(self.detection_zones)
                 update_densities(self.detection_zones)
             self.update()  # graphical update of the grid
+        if self.is_rimea_4:
+            get_final_metrics(self.detection_zones)
 
 
 if __name__ == "__main__":

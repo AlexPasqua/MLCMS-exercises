@@ -24,6 +24,21 @@ def update_densities(detection_zones):
         dz.update_density()
 
 
+def get_final_metrics(detection_zones):
+    avg_densities = []
+    avg_speeds = []
+    avg_flows = []
+    for dz in detection_zones:
+        dz.update_resulting_measures()
+        avg_densities.append(dz.avg_density)
+        avg_speeds.append(dz.avg_speed)
+        avg_flows.append(dz.avg_flow)
+
+    print(f"AVG_DENSITY: {sum(avg_densities)/len(avg_densities)}"
+          f"\nAVG_SPEED: {sum(avg_speeds)/len(avg_speeds)}"
+          f"\nAVG_FLOW: {sum(avg_flows)/len(avg_flows)}")
+
+
 class DetectionZone:
     """
         Object to handle measurements in particular zones of the grid
@@ -62,10 +77,9 @@ class DetectionZone:
         """
         to_trim = 0
         for d in reversed(self.densities):
-            if d == 0:
-                to_trim += 1
-            else:
+            if d != 0:
                 break
+            to_trim += 1
         self.densities = self.densities[:-to_trim]
 
     def draw(self):
@@ -91,8 +105,6 @@ class DetectionZone:
             if self.grid.grid[cell[0]][cell[1]].status == 'Person':
                 num_pedestrians += 1
         self.densities.append(num_pedestrians/self.area)
-        if self.densities[-1] != 0:
-            print(self, self.densities[-1])
 
     def update_speed(self, speed):
         """
@@ -113,6 +125,5 @@ class DetectionZone:
         self.avg_flow = self.avg_speed * self.avg_density
 
     def __str__(self):
-        return f"ZONE DELIMITED BETWEEN ROWS {self.min_row} - {self.max_row} AND COLUMNS {self.min_col} - {self.max_col}" \
-               f" WITH A TOTAL AREA OF {self.area} SQUARED METERS"
+        return f"ZONE COLUMNS: {self.min_col} - {self.max_col}"
 

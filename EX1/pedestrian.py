@@ -32,7 +32,7 @@ class Pedestrian:
         self.total_meters = 0.  # total space to reach target
 
         # rimea 4 attributes, to report speed of current pedestrian to correct detection zone
-        self.is_rimea = False
+        self.is_rimea = is_rimea
         self.current_detection_zone = None
         self.time_in_zone = 0
         self.space_in_zone = 0
@@ -264,8 +264,6 @@ class Pedestrian:
                     if self.current_detection_zone is not None:
                         self.time_in_zone += to_add
                         self.space_in_zone += to_add
-
-
         else:
             # decrease the waiting time
             self.waiting_time -= self.grid.TIME_STEP

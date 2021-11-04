@@ -85,7 +85,7 @@ def rimea_test_1(grid_size = 40, screen_width = 500):
 def rimea_test_4(screen_width=500):
     grid_size = 80
     app = Tk()
-    grid = CellGrid(app, grid_size, int(screen_width / grid_size))
+    grid = CellGrid(app, grid_size, int(screen_width / grid_size), is_rimea_4=True)
     grid.pack()
     grid.focus_set()  # to receive inputs form keyboard
 
@@ -102,13 +102,14 @@ def rimea_test_4(screen_width=500):
     for i in range(min_row, max_row + 1):
         for j in range(min_col, max_col + 1):
             possible_cells.append((i, j))
-    num_pedestrians = len(possible_cells) // 20
+    num_pedestrians = len(possible_cells) // 2
     print(f"PRODUCING {num_pedestrians} PEDESTRIANS IN AN AREA OF {len(possible_cells)} CELLS")
     while num_pedestrians > 0:
         candidate_cell = random.choice(possible_cells)
         possible_cells.remove(candidate_cell)
         set_person(grid, candidate_cell[0], candidate_cell[1])
         num_pedestrians -= 1
+    set_person(grid, 39, 13)
 
     # draw target at the end of the corridor
     for i in range((grid_size // 2) - corridor_width + 1, (grid_size // 2) + corridor_width):
@@ -214,4 +215,4 @@ def sample_age_speed(num_samples):
 
 
 if __name__ == "__main__":
-    rimea_test_7()
+    rimea_test_4()
