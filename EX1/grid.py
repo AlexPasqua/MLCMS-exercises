@@ -6,29 +6,14 @@ from pedestrian import Pedestrian
 from cell import *
 from detection_zone import *
 
-"""
-At the moment it is possible to edit the field of play as one prefers. Once the Run button is pressed the player can 
-select one of the Person cells (red ones) and move it around using the arrow keys or wasd controls. It is possible to 
-switch person just by clicking on a different one.
-Player will win when reaching the target (green cells), and will vanish. Player cannot go through other players or 
-obstacles.
-"""
-
-
-def close_app(event):
-    """
-    press the ESCAPE key to terminate the program
-    :param event:
-    """
-    sys.exit()
-
 
 class CellGrid(Canvas):
     """
-    Object to handle the overall execution, maintaining the graphical grid and switching between different modalities
+    Object representing the grid that acts as environment for the cellular automaton.
+    It is also used to handle the overall execution, maintaining the graphical grid and switching between different modalities
     """
 
-    def __init__(self, master, row_number, cell_size, is_rimea_4=False, *args, **kwargs):
+    def __init__(self, master, row_number: int, cell_size: int, is_rimea_4=False, *args, **kwargs):
         self.canvas = Canvas.__init__(self, master, width=cell_size * row_number, height=cell_size * row_number,
                                       *args, **kwargs)
         self.master = master
@@ -40,15 +25,15 @@ class CellGrid(Canvas):
         self.selected_pedestrian = None  # needed for free walk mode
 
         # attributes for simulation purposes
-        self.targets_cell_list = []
-        self.obstacles_cell_list = []
-        self.pedestrian_cell_list = []  # lower level structure, containing only the Cell object
-        self.pedestrian_list = None  # higher level structure, containing Pedestrian object
-        self.pedestrian_speeds = []  # list of pedestrian final speeds, needed for statistical aspect in RiMEA Test 7
-        self.dijkstra_enabled = IntVar()  # variable associated to checkbox for enabling/disabling Dijkstra
-        self.TIME_STEP = 0.1  # needed for simulation
+        self.targets_cell_list = []         # list containing the Cell objects occupied by targets
+        self.obstacles_cell_list = []       # list containing the Cell objects occupied by obstacles
+        self.pedestrian_cell_list = []      # lower level structure, containing only the Cell objects
+        self.pedestrian_list = None         # higher level structure, containing Pedestrian objects
+        self.pedestrian_speeds = []         # list of pedestrian final speeds, needed for statistical aspect in RiMEA Test 7
+        self.dijkstra_enabled = IntVar()    # variable associated to checkbox for enabling/disabling Dijkstra
+        self.TIME_STEP = 0.1                # simulation time step (for time discretization)
 
-        # buttons and their initialization
+        # buttons
         self.person_button = None
         self.obstacle_button = None
         self.target_button = None
@@ -56,22 +41,19 @@ class CellGrid(Canvas):
         self.free_walk_button = None
         self.dijkstra = None
         self.buttons = []
-        self.init_buttons()
+        self.init_buttons()     # bind buttons attribute to real physical buttons
 
-        # graphical grid init
+        # graphical grid initialization
         self.cellSize = cell_size
         self.grid = []
         column_number = row_number
         for row in range(row_number):
-            line = [Cell(self, x=column, y=row, size=cell_size) for column in range(column_number)]
+            line = [Cell(self, x=column, y=row, size=cell_size) for column in range(column_number)]  # a row of the grid
             self.grid.append(line)
 
         # attributes for RiMEA 4
-        self.is_rimea_4 = is_rimea_4
-        self.detection_zones = init_detection_zones(self)
-
-        for dz in self.detection_zones:
-            print(dz)
+        self.is_rimea_4 = is_rimea_4    # boolean to avoid some computation if not needed for RiMEA 4
+        self.detection_zones = init_detection_zones(self)   # detection zones for RiMEA 4
 
         # memorize the cells that have been modified to avoid many switching of state during mouse motion.
         self.switched = []
@@ -83,20 +65,23 @@ class CellGrid(Canvas):
         # bind release button action - clear the memory of modified cells.
         self.bind("<ButtonRelease-1>", lambda event: self.switched.clear())
         # bind escape button action - exit application
-        self.bind("<Escape>", close_app)
+        self.bind("<Escape>", sys.exit)
 
-        # draw grid
+        # draw empty grid
         self.draw_empty_grid()
 
     def draw_empty_grid(self):
+        """
+        Draws the empty grid to start up the environment
+        """
         for row in self.grid:
             for cell in row:
                 cell.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
 
     def _event_coords(self, event):
         """
-        to capture the correct locations of keyboard/mouse triggered events
-        :param event:
+        Captures the correct locations of keyboard/mouse triggered events
+        :param event: the event that happened
         :return: the row and columns where the event occurred
         """
         column = int(event.x / self.cellSize)
@@ -105,8 +90,7 @@ class CellGrid(Canvas):
 
     def handle_mouse_click(self, event):
         """
-        function to handle left mouse click, coloring a specific cell
-        :param event:
+        Handle left mouse click, coloring a specific cell
         """
         row, column = self._event_coords(event)
         cell = self.grid[row][column]
@@ -117,8 +101,7 @@ class CellGrid(Canvas):
 
     def handle_mouse_motion(self, event):
         """
-        function to handle the multiple coloring feature, happening when clicking and maintaining left mouse button
-        :param event:
+        Handle the multiple coloring feature, happening when clicking and maintaining left mouse button.
         """
         row, column = self._event_coords(event)
         cell = self.grid[row][column]
@@ -129,7 +112,7 @@ class CellGrid(Canvas):
 
     def init_buttons(self):
         """
-        function to initialize all buttons, binding them to a certain function to trigger when an event arrives
+        Initialize all buttons, binding them to a certain function to trigger when an event arrives
         """
         self.person_button = Button(self.canvas, text="Person", command=self.draw_person)
         self.person_button.pack()
@@ -150,20 +133,20 @@ class CellGrid(Canvas):
         self.dijkstra = Checkbutton(self.canvas, text='Dijkstra', variable=self.dijkstra_enabled)
         self.dijkstra.pack()
 
-    def update_buttons_state(self, current_button_text):
+    def update_buttons_state(self, current_button_text: str):
         """
-        rises the previously pressed button, keeps pressed the last fired button
-        :param current_button_text:
+        Raise the previously pressed button, keeps pressed the last fired button
+        :param current_button_text: current text written in the button
         """
         for button in self.buttons:
             if button['text'] == current_button_text:
-                button.configure(relief=SUNKEN, state=DISABLED)
+                button.configure(relief=SUNKEN, state=DISABLED)     # sink and disable the button
             elif button['state'] == DISABLED:
-                button.configure(relief=RAISED, state=ACTIVE)
+                button.configure(relief=RAISED, state=ACTIVE)       # raise and enable the button
 
     def draw_person(self):
         """
-        prepares the color configuration for drawing Person/Pedestrian
+        prepares the color configuration for drawing Pedestrian
         """
         self.update_buttons_state("Person")
         color = "red"
@@ -199,7 +182,8 @@ class CellGrid(Canvas):
 
     def free_walk_mode(self):
         """
-        changes the key bindings for handling the free walk mode
+        changes the key bindings for handling the free walk mode where it's possible to move a pedestrian with the
+        arrows on the keyboards or with the WASD keys
         """
         print('Entering movement mode..')
         # bind click action
@@ -233,39 +217,39 @@ class CellGrid(Canvas):
 
     def editing_mode(self):
         """
-        changes the key bindings for handling the editing mode
+        changes the key bindings for handling the editing mode, where it's possible to modify the layout of the grid
         """
         print('Entering movement mode..')
+        # bind new buttons
         self.bind("<Button-1>", self.handle_mouse_click)
         self.bind("<B1-Motion>", self.handle_mouse_motion)
         self.bind("<ButtonRelease-1>", lambda event: self.switched.clear())
-        self.unbind(("<Left>", "<Right>", "<Up>", "<Down>", "a", "s", "d", "w"))
-        self.person_button.configure(relief=RAISED, state=ACTIVE)  # person
-        self.obstacle_button.configure(relief=RAISED, state=ACTIVE)  # obstacle
-        self.target_button.configure(relief=SUNKEN, state=DISABLED)  # target
+        self.unbind(("<Left>", "<Right>", "<Up>", "<Down>", "a", "s", "d", "w"))    # unbind the arrows and WASD keys
+        # set un the buttons correctly on the interface
+        self.person_button.configure(relief=RAISED, state=ACTIVE)       # person
+        self.obstacle_button.configure(relief=RAISED, state=ACTIVE)     # obstacle
+        self.target_button.configure(relief=SUNKEN, state=DISABLED)     # target
         self.draw_target()
         self.free_walk_button['text'] = "Free Walk"  # free walk / editing mode
 
     def select_person(self, event):
         """
         left-clicking on a Person cell will select it, making it able to be moved
-        :param event:
         """
         row, column = self._event_coords(event)
         candidate_cell = self.grid[row][column]
         if candidate_cell.status == 'Person':
-            self.selected_pedestrian = candidate_cell
+            self.selected_pedestrian = candidate_cell   # set the selected pedestrian to be able to move it
 
-    def move_person(self, event=None, movement=None):
+    def move_person(self, event=None):
         """
-        function to handle movement in FREE WALK MODE
-        :param event:
-        :param movement:
+        Handle pedestrians' movements in the FREE WALK MODE
         """
-        # TODO need to check boundaries!
         if self.selected_pedestrian is not None:  # a pedestrian has to be selected by left-clicking it
             self.selected_pedestrian.switch()
             self.selected_pedestrian.draw(self.FILLED_COLOR_BG, self.FILLED_COLOR_BORDER)
+
+            # handle movements in different directions
             if event.keysym == 'Right' or event.keysym == 'd':
                 candidate_cell = self.grid[self.selected_pedestrian.ord][self.selected_pedestrian.abs + 1]
             elif event.keysym == 'Left' or event.keysym == 'a':
@@ -274,6 +258,7 @@ class CellGrid(Canvas):
                 candidate_cell = self.grid[self.selected_pedestrian.ord - 1][self.selected_pedestrian.abs]
             else:
                 candidate_cell = self.grid[self.selected_pedestrian.ord + 1][self.selected_pedestrian.abs]
+
             if candidate_cell.status not in ('Obstacle', 'Person'):  # to avoid going over an Obstacle or other person
                 self.selected_pedestrian = candidate_cell
             if candidate_cell.status == 'Target':  # disappear when going on Target
@@ -291,8 +276,10 @@ class CellGrid(Canvas):
         self.unbind("<Button-1>")
         self.unbind("<B1-Motion>")
         self.unbind("<ButtonRelease-1>")
+        # setting the colors for pedestrians
         self.FILLED_COLOR_BORDER = 'red'
         self.FILLED_COLOR_BG = 'red'
+        # configure the buttons
         self.person_button.configure(relief=SUNKEN, state=DISABLED)
         self.obstacle_button.configure(relief=SUNKEN, state=DISABLED)
         self.target_button.configure(relief=SUNKEN, state=DISABLED)
@@ -312,18 +299,21 @@ class CellGrid(Canvas):
             for pedestrian in self.pedestrian_list:
                 pedestrian.update_cost_function(planning_grid, dijkstra=activate_dijkstra)  # update local cost_matrix
                 planning_grid, pedestrian_has_ended = pedestrian.move()  # try to move (time constraints)
+
                 if pedestrian_has_ended:
                     self.pedestrian_speeds.append(pedestrian.total_meters / pedestrian.total_time)
                     print("Pedestrian reached target in:", pedestrian.total_time, 'with a speed of:',
-                          self.pedestrian_speeds[-1], "(expected speed was: ", pedestrian.speed,
-                          ")")
+                          self.pedestrian_speeds[-1], "(expected speed was: ", pedestrian.speed, ")")
                     self.pedestrian_list.remove(pedestrian)
 
             time.sleep(self.TIME_STEP)  # discretization
+
             if self.is_rimea_4:
                 draw_detection_zones(self.detection_zones)
                 update_densities(self.detection_zones)
+
             self.update()  # graphical update of the grid
+
         if self.is_rimea_4:
             get_final_metrics(self.detection_zones)
 
