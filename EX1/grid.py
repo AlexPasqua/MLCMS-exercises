@@ -3,7 +3,7 @@ import time
 import random
 from planning_grid import PlanningGrid
 from pedestrian import Pedestrian
-from cell import Cell
+from cell import *
 from detection_zone import *
 
 """
