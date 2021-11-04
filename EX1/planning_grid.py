@@ -1,6 +1,3 @@
-from grid import *
-
-
 class PlanningGrid:
     """
     An object helping with the simulation handling, keeping it simpler to manage wrt using directly the graphical grid
@@ -19,7 +16,7 @@ class PlanningGrid:
         self.grid = []
         self.init_grid(cell_grid)
 
-    def init_grid(self, cell_grid: CellGrid):
+    def init_grid(self, cell_grid):
         """
         Construct a much simpler grid wrt the graphical purpose one.
         Planning grid is a matrix where each cell content is an integer identifying what is inside the cell

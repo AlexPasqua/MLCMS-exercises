@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import pandas as pd
-from planning_grid import PlanningGrid
+from planning_grid import *
 from grid import *
 
 
@@ -10,7 +10,7 @@ class Pedestrian:
     Object representing a pedestrian and wrapping around Cell, allows for the agent's planning
     """
 
-    def __init__(self, grid: Grid, cell: Cell, speed=1.0, is_rimea=False):
+    def __init__(self, grid, cell, speed=1.0, is_rimea=False):
         # attributes coordinates and next movement change
         self.row = cell.ord
         self.col = cell.abs
@@ -61,7 +61,7 @@ class Pedestrian:
             self.current_detection_zone.update_speed(speed_in_zone)     # send to the detection zone the pedestrian's speed
             self.current_detection_zone = None
 
-    def update_cost_function(self, planning_grid: PlanningGrid, dijkstra=True):
+    def update_cost_function(self, planning_grid, dijkstra=True):
         """
         updates the cost matrix, taking care of particular cases such as edges, Obstacles, other Pedestrians and Targets.
         There are different modalities for using Dijkstra's algorithm or a rudimentary obstacle avoidance.

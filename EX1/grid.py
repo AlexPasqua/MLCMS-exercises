@@ -1,7 +1,7 @@
 from tkinter import *
 import time
 import random
-from planning_grid import PlanningGrid
+from planning_grid import *
 from pedestrian import *
 from cell import *
 from detection_zone import *
@@ -302,8 +302,8 @@ class CellGrid(Canvas):
 
                 if pedestrian_has_ended:
                     self.pedestrian_speeds.append(pedestrian.total_meters / pedestrian.total_time)
-                    print("Pedestrian reached target in:", pedestrian.total_time, 'with a speed of:',
-                          self.pedestrian_speeds[-1], "(expected speed was: ", pedestrian.speed, ")")
+                    print("Pedestrian reached target in:", round(pedestrian.total_time, 3), 'with a speed of:',
+                          round(self.pedestrian_speeds[-1], 2), "(expected speed was: ", pedestrian.speed, ")")
                     self.pedestrian_list.remove(pedestrian)
 
             time.sleep(self.TIME_STEP)  # discretization
@@ -329,11 +329,11 @@ class CellGrid(Canvas):
         max_row = (grid_size // 2) + 1
         min_col = 14
         max_col = 16
-        detection_zones = [DetectionZone(grid, min_row, max_row, min_col, max_col)]
+        detection_zones = [DetectionZone(self, min_row, max_row, min_col, max_col)]
         min_col, max_col = min_col + 25, max_col + 25
-        detection_zones.append(DetectionZone(grid, min_row, max_row, min_col, max_col))
+        detection_zones.append(DetectionZone(self, min_row, max_row, min_col, max_col))
         min_col, max_col = min_col + 25, max_col + 25
-        detection_zones.append(DetectionZone(grid, min_row, max_row, min_col, max_col))
+        detection_zones.append(DetectionZone(self, min_row, max_row, min_col, max_col))
         return detection_zones
 
     def draw_detection_zones(self):
@@ -366,10 +366,3 @@ class CellGrid(Canvas):
               f"\nAVG_SPEED: {sum(avg_speeds) / len(avg_speeds)}"
               f"\nAVG_FLOW: {sum(avg_flows) / len(avg_flows)}")
 
-
-if __name__ == "__main__":
-    app = Tk()
-    grid = CellGrid(app, 10, 50)
-    grid.pack()
-    grid.focus_set()  # to receive inputs form keyboard
-    app.mainloop()

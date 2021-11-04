@@ -66,6 +66,19 @@ def setup_task_3(app):
     set_target(grid, 24, 24)
 
 
+def setup_task_4(app):
+    """ Create environment for task 4 """
+    grid = CellGrid(app, 10, 50)
+    grid.pack()
+    set_target(grid, 0, 4)
+    set_person(grid, 6, 4)
+    for i in range(2, 7):
+        set_obstacle(grid, 2, i)
+    for i in range(3, 5):
+        set_obstacle(grid, i, 2)
+        set_obstacle(grid, i, 6)
+
+
 def rimea_test_1(grid_size=40, screen_width=500):
     """ Create environment for RiMEA scenario 1 in task 5 """
     app = Tk()
@@ -227,7 +240,3 @@ def sample_age_speed(num_samples):
         else:
             speed_list.append(np.random.uniform(fifth_range_speed[0], fifth_range_speed[1]))
     return [round(speed, 2) for speed in speed_list]
-
-
-if __name__ == "__main__":
-    rimea_test_4()
