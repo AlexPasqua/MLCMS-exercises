@@ -109,6 +109,7 @@ class CellGrid(Canvas):
         self.pedestrian_list = []       # higher level structure, containing Pedestrian object
         self.obstacles_cell_list = []
         self.cellSize = cell_size
+        self.dijkstra_enabled = IntVar()  # variable associated to checkbox for enabling/disabling Dijkstra
 
         # buttons and their initialization
         self.person_button = None
@@ -116,6 +117,7 @@ class CellGrid(Canvas):
         self.target_button = None
         self.run_simulation_button = None
         self.free_walk_button = None
+        self.dijkstra = None
         self.buttons = []
         self.init_buttons()
 
@@ -197,6 +199,10 @@ class CellGrid(Canvas):
                         self.free_walk_button]
         # target button is pressed by default
         self.target_button.configure(relief=SUNKEN, state=DISABLED)
+
+        # setup checkbox for dijkstra enabling
+        self.dijkstra = Checkbutton(self.canvas, text='Dijkstra', variable=self.dijkstra_enabled)
+        self.dijkstra.pack()
 
     def update_buttons_state(self, current_button_text):
         """
@@ -353,10 +359,12 @@ class CellGrid(Canvas):
         self.pedestrian_list = [Pedestrian(self, cell) for cell in self.pedestrian_cell_list]
 
         # continue simulating until all pedestrian have not reached a target
+        print(self.dijkstra_enabled.get())
+        activate_dijkstra = True if self.dijkstra_enabled.get() == 1 else False
         while len(self.pedestrian_list) != 0:
             random.shuffle(self.pedestrian_list)  # to avoid giving advantage to the same Pedestrian all the time
             for pedestrian in self.pedestrian_list:
-                pedestrian.update_cost_function(planning_grid)  # update local cost_matrix
+                pedestrian.update_cost_function(planning_grid, dijkstra=activate_dijkstra)  # update local cost_matrix
                 planning_grid, pedestrian_has_ended = pedestrian.move()  # try to move (time constraints)
                 if pedestrian_has_ended:
                     print("Pedestrian reached target in:", pedestrian.total_time)
