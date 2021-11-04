@@ -10,7 +10,7 @@ class Pedestrian:
     Object wrapping around Cell, allows for the agent's planning
     """
 
-    def __init__(self, grid, cell):
+    def __init__(self, grid, cell, speed=1.0):
         self.row = cell.ord
         self.col = cell.abs
         self.delta_row = None  # for planned movement in row axis
@@ -21,8 +21,10 @@ class Pedestrian:
         self.cell = cell
         self.active = True  # active -> ready to plan next move, not active -> waiting to actuate a planned move
         self.goal_achieved = False  # arrived at Target, waiting for object removal
+        self.speed = speed  # speed in m/s
         self.waiting_time = 0.  # time left to wait
         self.total_time = 0.  # total time to reach target
+        self.total_meters = 0.  # total space to reach target
         # local cost function, for understanding which is the next best step to take
         self.cost_matrix = [[0. for i in range(len(grid.grid))] for j in range(len(grid.grid[0]))]
 
@@ -37,7 +39,7 @@ class Pedestrian:
 
         self.planning_grid = planning_grid
 
-        start_time = time.time()
+        # start_time = time.time()
 
         if dijkstra:
             init_df = time.time()
@@ -50,9 +52,9 @@ class Pedestrian:
                     table_row = {'cell': cell_name, 'dist_from_source': math.inf, 'prev_cell': '', 'visited': False}
                     table = table.append(table_row, ignore_index=True)
                     self.cost_matrix[i][j] = math.inf
-            print("INIT_DF:", time.time()-init_df)
+            # print("INIT_DF:", time.time()-init_df)
 
-            obst_ped_init = time.time()
+            # obst_ped_init = time.time()
             table.loc[table['cell'] == source_name, 'dist_from_source'] = 0  # set distance from source to itself to 0
             for i in range(len(self.planning_grid.grid)):
                 for j in range(len(self.planning_grid.grid[0])):
@@ -60,24 +62,34 @@ class Pedestrian:
                     if self.planning_grid.grid[i][j] == self.planning_grid.OBSTACLE_CELL:
                         table.loc[table['cell'] == cell_name, 'dist_from_source'] = math.inf
                         table.loc[table['cell'] == cell_name, 'visited'] = True
-            print("INIT OBST AND PED:", time.time()-obst_ped_init)
+            # print("INIT OBST AND PED:", time.time()-obst_ped_init)
 
             found_target = False
-            while_loop = time.time()
+            # while_loop = time.time()
+
+            # cycle_counter = 0
+            # sorting_time = 0
+            # working_time = 0
+
             while not found_target:
-                # non_visited = table[table['visited'] == False]
-                # curr_name = non_visited[(non_visited['dist_from_source'] == min(non_visited['dist_from_source']))]['cell'].values[0]
-                curr_name = table[table['visited'] == False].sort_values(by='dist_from_source')['cell'].values[0]
+                # sorting_time_internal = time.time()
+                non_visited = table[table['visited'] == False]
+                curr_name = non_visited[(non_visited['dist_from_source'] == min(non_visited['dist_from_source']))]['cell'].values[0]
+
+                # curr_name = table[table['visited'] == False].sort_values(by='dist_from_source')['cell'].values[0]
+                # sorting_time += time.time() - sorting_time_internal
                 curr_row, curr_col = curr_name.split(',')
                 curr_row, curr_col = int(curr_row), int(curr_col)
                 table.loc[table['cell'] == curr_name, 'visited'] = True   # set source as visited
+                # working_time_internal = time.time()
                 for i in range(-1, 2):
                     for j in range(-1, 2):
+                        curr_cell_dist = table[table['cell'] == curr_name]['dist_from_source'].values[0]
                         if 0 <= curr_row + i < len(self.grid.grid) and 0 <= curr_col + j < len(self.grid.grid[0]):
                             neigh_row, neigh_col, neigh_name = curr_row + i, curr_col + j, str(curr_row + i) + ',' + str(curr_col + j)
                             neigh_dist = 1.4 if abs(i) == abs(j) else 1.
                             if self.planning_grid.grid[neigh_row][neigh_col] == self.planning_grid.TARGET_CELL:
-                                candidate_target_dist = neigh_dist + table[table['cell'] == curr_name]['dist_from_source'].values[0]
+                                candidate_target_dist = neigh_dist + curr_cell_dist
                                 if found_target:  # target already found, update best target only if nearer
                                     if target_dist > candidate_target_dist:
                                         target_dist = candidate_target_dist
@@ -87,13 +99,17 @@ class Pedestrian:
                                     target_row, target_col, target_name = neigh_row, neigh_col, neigh_name
                                 found_target = True
                             if neigh_name not in table[table['visited']]['cell']:   # if neighbor not visited
-                                dist_from_source = neigh_dist + table[table['cell'] == curr_name]['dist_from_source'].values[0]
+                                dist_from_source = neigh_dist + curr_cell_dist
                                 if dist_from_source < table[table['cell'] == neigh_name]['dist_from_source'].values[0]:
                                     table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
                                     table.loc[table['cell'] == neigh_name, 'prev_cell'] = curr_name
-            print("WHILE:", time.time()-while_loop)
-
-            path_create = time.time()
+            #     working_time += time.time() - working_time_internal
+            #     cycle_counter += 1
+            # print("SORTING_TIME AVG:", sorting_time / cycle_counter, "SORTING TIME:", sorting_time)
+            # print("WORKING TIME AVG:", working_time / cycle_counter, "WORKING_TIME:", working_time)
+            # print("WHILE:", time.time()-while_loop)
+            #
+            # path_create = time.time()
             # create path on the cost matrix to be used in "move"
             curr_cost = 0
             curr_name = target_name
@@ -108,8 +124,8 @@ class Pedestrian:
                     break
                 curr_row, curr_col = int(curr_row), int(curr_col)
                 self.cost_matrix[curr_row][curr_col] = curr_cost
-            print("PATH CREATION:", time.time()-path_create)
-            print("DIJKSTRA:", time.time()-start_time)
+            # print("PATH CREATION:", time.time()-path_create)
+            # print("DIJKSTRA:", time.time()-start_time)
         else:
             # find the nearest target by Euclidean Distance
             min_dist = math.inf
@@ -136,7 +152,7 @@ class Pedestrian:
             # manage obstacles -> cost = infinite
             for obs in self.planning_grid.obstacles_list:
                 self.cost_matrix[obs[0]][obs[1]] = math.inf
-            print("NON DIJKSTRA:", time.time()-start_time)
+            # print("NON DIJKSTRA:", time.time()-start_time)
 
         # manage pedestrians -> cost = infinite
         for ped in self.planning_grid.pedestrian_list:
@@ -213,7 +229,7 @@ class Pedestrian:
             self.actuate_move(self.planning_grid.grid, self.delta_row, self.delta_col, planning=True)
 
             # if move is diagonal, set waiting time to 1.4s, otherwise to 1.0s
-            self.waiting_time = 1.4 if abs(self.delta_col) - abs(self.delta_row) == 0 else 1.0
+            self.waiting_time = 1.4/self.speed if abs(self.delta_col) - abs(self.delta_row) == 0 else 1.0/self.speed
 
             # set pedestrian to sleep
             self.active = False
@@ -222,6 +238,9 @@ class Pedestrian:
             if self.delta_col == self.delta_row == 0:
                 self.total_time += self.grid.TIME_STEP
                 self.active = True
+            else:
+                # if the pedestrian is moving, add the space travelled
+                self.total_meters += 1.4 if abs(self.delta_col) - abs(self.delta_row) == 0 else 1.0
         else:
             # decrease the waiting time
             self.waiting_time -= self.grid.TIME_STEP

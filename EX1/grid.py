@@ -106,7 +106,7 @@ class CellGrid(Canvas):
         self.selected_pedestrian = None  # needed for free walk mode
         self.targets_cell_list = []
         self.pedestrian_cell_list = []  # lower level structure, containing only the Cell object
-        self.pedestrian_list = []       # higher level structure, containing Pedestrian object
+        self.pedestrian_list = None      # higher level structure, containing Pedestrian object
         self.obstacles_cell_list = []
         self.cellSize = cell_size
         self.dijkstra_enabled = IntVar()  # variable associated to checkbox for enabling/disabling Dijkstra
@@ -355,8 +355,9 @@ class CellGrid(Canvas):
         # create a PlanningGrid for more efficient management of simulation
         planning_grid = PlanningGrid(self)
 
-        # create a Pedestrian list to access useful methods
-        self.pedestrian_list = [Pedestrian(self, cell) for cell in self.pedestrian_cell_list]
+        # create a Pedestrian list to access useful methods ("if" used for RiMEA Test 7)
+        if self.pedestrian_list is None:
+            self.pedestrian_list = [Pedestrian(self, cell) for cell in self.pedestrian_cell_list]
 
         # continue simulating until all pedestrian have not reached a target
         print(self.dijkstra_enabled.get())
@@ -367,7 +368,8 @@ class CellGrid(Canvas):
                 pedestrian.update_cost_function(planning_grid, dijkstra=activate_dijkstra)  # update local cost_matrix
                 planning_grid, pedestrian_has_ended = pedestrian.move()  # try to move (time constraints)
                 if pedestrian_has_ended:
-                    print("Pedestrian reached target in:", pedestrian.total_time)
+                    print("Pedestrian reached target in:", pedestrian.total_time, 'with a speed of:',
+                          pedestrian.total_meters / pedestrian.total_time, "(expected speed was: ", pedestrian.speed,")")
                     self.pedestrian_list.remove(pedestrian)
 
             time.sleep(self.TIME_STEP)  # discretization
