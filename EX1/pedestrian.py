@@ -10,23 +10,55 @@ class Pedestrian:
     Object wrapping around Cell, allows for the agent's planning
     """
 
-    def __init__(self, grid, cell, speed=1.0):
+    def __init__(self, grid, cell, speed=1.0, is_rimea=False):
+        # attributes coordinates and next movement change
         self.row = cell.ord
         self.col = cell.abs
         self.delta_row = None  # for planned movement in row axis
         self.delta_col = None  # for planned movement in col axis
         self.coords = np.array([self.row, self.col])
+
+        # attributes for graphical and planning grid
         self.grid = grid  # graphical grid
         self.planning_grid = None  # planning grid
-        self.cell = cell
+
         self.active = True  # active -> ready to plan next move, not active -> waiting to actuate a planned move
         self.goal_achieved = False  # arrived at Target, waiting for object removal
+
+        # attributes regarding timings
         self.speed = speed  # speed in m/s
         self.waiting_time = 0.  # time left to wait
         self.total_time = 0.  # total time to reach target
         self.total_meters = 0.  # total space to reach target
+
+        # rimea 4 attributes, to report speed of current pedestrian to correct detection zone
+        self.is_rimea = False
+        self.current_detection_zone = None
+        self.time_in_zone = 0
+        self.space_in_zone = 0
+
         # local cost function, for understanding which is the next best step to take
         self.cost_matrix = [[0. for i in range(len(grid.grid))] for j in range(len(grid.grid[0]))]
+
+    def check_if_in_detection_zone(self):
+        """
+
+        :return:
+        """
+        in_detection_zone = False
+
+        for dz in self.grid.detection_zones:
+            if dz.min_row <= self.row <= dz.max_row and dz.min_col <= self.col <= dz.max_col:
+                in_detection_zone = True
+                if self.current_detection_zone is None:  # found new detection zone, start to count time and travel
+                    self.current_detection_zone = dz
+                    self.time_in_zone = 0
+                    self.space_in_zone = 0
+
+        if in_detection_zone == False and self.current_detection_zone is not None:  # exited from the detection zone
+            speed_in_zone = self.space_in_zone / self.time_in_zone
+            self.current_detection_zone.update_speed(speed_in_zone)
+            self.current_detection_zone = None
 
     def update_cost_function(self, planning_grid, dijkstra=True):
         """
@@ -61,17 +93,19 @@ class Pedestrian:
             found_target = False
             while not found_target:
                 non_visited = table[table['visited'] == False]
-                curr_name = non_visited[(non_visited['dist_from_source'] == min(non_visited['dist_from_source']))]['cell'].values[0]
+                curr_name = \
+                non_visited[(non_visited['dist_from_source'] == min(non_visited['dist_from_source']))]['cell'].values[0]
 
                 # curr_name = table[table['visited'] == False].sort_values(by='dist_from_source')['cell'].values[0]
                 curr_row, curr_col = curr_name.split(',')
                 curr_row, curr_col = int(curr_row), int(curr_col)
-                table.loc[table['cell'] == curr_name, 'visited'] = True   # set source as visited
+                table.loc[table['cell'] == curr_name, 'visited'] = True  # set source as visited
                 for i in range(-1, 2):
                     for j in range(-1, 2):
                         curr_cell_dist = table[table['cell'] == curr_name]['dist_from_source'].values[0]
                         if 0 <= curr_row + i < len(self.grid.grid) and 0 <= curr_col + j < len(self.grid.grid[0]):
-                            neigh_row, neigh_col, neigh_name = curr_row + i, curr_col + j, str(curr_row + i) + ',' + str(curr_col + j)
+                            neigh_row, neigh_col, neigh_name = curr_row + i, curr_col + j, str(
+                                curr_row + i) + ',' + str(curr_col + j)
                             neigh_dist = 1.4 if abs(i) == abs(j) else 1.
                             if self.planning_grid.grid[neigh_row][neigh_col] == self.planning_grid.TARGET_CELL:
                                 candidate_target_dist = neigh_dist + curr_cell_dist
@@ -83,7 +117,7 @@ class Pedestrian:
                                     target_dist = candidate_target_dist
                                     target_row, target_col, target_name = neigh_row, neigh_col, neigh_name
                                 found_target = True
-                            if neigh_name not in table[table['visited']]['cell']:   # if neighbor not visited
+                            if neigh_name not in table[table['visited']]['cell']:  # if neighbor not visited
                                 dist_from_source = neigh_dist + curr_cell_dist
                                 if dist_from_source < table[table['cell'] == neigh_name]['dist_from_source'].values[0]:
                                     table.loc[table['cell'] == neigh_name, 'dist_from_source'] = dist_from_source
@@ -143,8 +177,10 @@ class Pedestrian:
             for delta_col in range(-1, 2):
                 if not (delta_row == 0 and delta_col == 0):  # Pedestrian is in the center -> (0,0)
                     # check for borders and construct surrounding cost matrix
-                    if 0 <= self.col + delta_col < len(self.grid.grid[0]) and 0 <= self.row + delta_row < len(self.grid.grid[:][0]):
-                        surrounding_costs[delta_row + 1][delta_col + 1] = self.cost_matrix[self.row + delta_row][self.col + delta_col]
+                    if 0 <= self.col + delta_col < len(self.grid.grid[0]) and 0 <= self.row + delta_row < len(
+                            self.grid.grid[:][0]):
+                        surrounding_costs[delta_row + 1][delta_col + 1] = self.cost_matrix[self.row + delta_row][
+                            self.col + delta_col]
                     else:
                         surrounding_costs[delta_row + 1][delta_col + 1] = math.inf  # if out of the matrix
                 else:
@@ -184,7 +220,9 @@ class Pedestrian:
             grid[self.row][self.col].draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
 
             # color the cell we're going to (if it is not a target)
-            if not candidate_cell.status == "Target":
+            if candidate_cell.FILLED_COLOR_BG == 'yellow':  # if we are in rimea 4 case do not need to switch
+                candidate_cell.draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
+            elif not candidate_cell.status == "Target":
                 candidate_cell.switch()
                 candidate_cell.draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
             else:
@@ -204,7 +242,7 @@ class Pedestrian:
             self.actuate_move(self.planning_grid.grid, self.delta_row, self.delta_col, planning=True)
 
             # if move is diagonal, set waiting time to 1.4s, otherwise to 1.0s
-            self.waiting_time = 1.4/self.speed if abs(self.delta_col) - abs(self.delta_row) == 0 else 1.0/self.speed
+            self.waiting_time = 1.4 / self.speed if abs(self.delta_col) - abs(self.delta_row) == 0 else 1.0 / self.speed
 
             # set pedestrian to sleep
             self.active = False
@@ -213,9 +251,21 @@ class Pedestrian:
             if self.delta_col == self.delta_row == 0:
                 self.total_time += self.grid.TIME_STEP
                 self.active = True
+                if self.is_rimea:
+                    self.check_if_in_detection_zone()
+                    if self.current_detection_zone is not None:
+                        self.time_in_zone += self.grid.TIME_STEP
             else:
                 # if the pedestrian is moving, add the space travelled
-                self.total_meters += 1.4 if abs(self.delta_col) - abs(self.delta_row) == 0 else 1.0
+                to_add = 1.4 if abs(self.delta_col) - abs(self.delta_row) == 0 else 1.0
+                self.total_meters += to_add
+                if self.is_rimea:
+                    self.check_if_in_detection_zone()
+                    if self.current_detection_zone is not None:
+                        self.time_in_zone += to_add
+                        self.space_in_zone += to_add
+
+
         else:
             # decrease the waiting time
             self.waiting_time -= self.grid.TIME_STEP

@@ -3,7 +3,8 @@ import time
 import random
 from planning_grid import PlanningGrid
 from pedestrian import Pedestrian
-import numpy as np
+from cell import Cell
+from detection_zone import *
 
 """
 At the moment it is possible to edit the field of play as one prefers. Once the Run button is pressed the player can 
@@ -12,77 +13,6 @@ switch person just by clicking on a different one.
 Player will win when reaching the target (green cells), and will vanish. Player cannot go through other players or 
 obstacles.
 """
-
-
-# TODO manage the edges when moving
-
-class Cell:
-    """
-    Object to handle at a low level the graphical cell, its color filling and its status changing
-    """
-
-    EMPTY_COLOR_BG = "white"
-    EMPTY_COLOR_BORDER = "black"
-
-    def __init__(self, master, x, y, size):
-        self.master = master
-        self.abs = x
-        self.ord = y
-        self.size = size
-        self.fill = False  # if False then the cell will be blanked out at next "draw" call
-        self.borders = [self.abs * self.size,
-                        self.ord * self.size,
-                        (self.abs + 1) * self.size,
-                        (self.ord + 1) * self.size]
-        self.status = "Blank"  # 4 possible statuses: Blank, Person, Obstacle, Target
-
-
-    def switch(self):
-        """
-        changes the fill modality: if fill is false then the next draw call will "Blank" the cell
-        """
-        self.fill = not self.fill
-
-    def draw(self, fill, outline):
-        """
-        effectively draw the cell, changing its color
-        :param fill:
-        :param outline:
-        """
-        if self.master is not None:
-            if not self.fill:
-                fill = self.EMPTY_COLOR_BG
-                outline = self.EMPTY_COLOR_BORDER
-
-            self.update_status(fill)
-            # print(self.borders[0], self.borders[1], self.borders[2], self.borders[3])
-            self.master.create_rectangle(self.borders[0], self.borders[1], self.borders[2], self.borders[3], fill=fill,
-                                         outline=outline)
-
-    def update_status(self, fill):
-        """
-        given a filling color changes the state of the cell, updating also the cell_grid lists of current
-        notable cells
-        :param fill:
-        """
-        if fill == 'white':
-            # the removal from the lists is done only here since before changing color each cell has to return Blank
-            if self.status == 'Person':
-                self.master.pedestrian_cell_list.remove(self)
-            elif self.status == 'Obstacle':
-                self.master.obstacles_cell_list.remove(self)
-            elif self.status == 'Target':
-                self.master.targets_cell_list.remove(self)
-            self.status = 'Blank'
-        elif fill == 'red':
-            self.status = 'Person'
-            self.master.pedestrian_cell_list.append(self)
-        elif fill == 'black':
-            self.status = 'Obstacle'
-            self.master.obstacles_cell_list.append(self)
-        else:
-            self.status = 'Target'
-            self.master.targets_cell_list.append(self)
 
 
 def close_app(event):
@@ -98,21 +28,25 @@ class CellGrid(Canvas):
     Object to handle the overall execution, maintaining the graphical grid and switching between different modalities
     """
 
-    def __init__(self, master, row_number, cell_size, *args, **kwargs):
+    def __init__(self, master, row_number, cell_size, is_rimea_4=False, *args, **kwargs):
         self.canvas = Canvas.__init__(self, master, width=cell_size * row_number, height=cell_size * row_number,
                                       *args, **kwargs)
         self.master = master
+
+        # default coloring of the cells
         self.FILLED_COLOR_BG = "green"
         self.FILLED_COLOR_BORDER = "green"
-        self.TIME_STEP = 0.1  # needed for simulation
+
         self.selected_pedestrian = None  # needed for free walk mode
+
+        # attributes for simulation purposes
         self.targets_cell_list = []
+        self.obstacles_cell_list = []
         self.pedestrian_cell_list = []  # lower level structure, containing only the Cell object
         self.pedestrian_list = None  # higher level structure, containing Pedestrian object
         self.pedestrian_speeds = []  # list of pedestrian final speeds, needed for statistical aspect in RiMEA Test 7
-        self.obstacles_cell_list = []
-        self.cellSize = cell_size
         self.dijkstra_enabled = IntVar()  # variable associated to checkbox for enabling/disabling Dijkstra
+        self.TIME_STEP = 0.1  # needed for simulation
 
         # buttons and their initialization
         self.person_button = None
@@ -125,11 +59,19 @@ class CellGrid(Canvas):
         self.init_buttons()
 
         # graphical grid init
+        self.cellSize = cell_size
         self.grid = []
         column_number = row_number
         for row in range(row_number):
             line = [Cell(self, x=column, y=row, size=cell_size) for column in range(column_number)]
             self.grid.append(line)
+
+        # attributes for RiMEA 4
+        self.is_rimea_4 = is_rimea_4
+        self.detection_zones = init_detection_zones(self)
+
+        for dz in self.detection_zones:
+            print(dz)
 
         # memorize the cells that have been modified to avoid many switching of state during mouse motion.
         self.switched = []
@@ -378,6 +320,9 @@ class CellGrid(Canvas):
                     self.pedestrian_list.remove(pedestrian)
 
             time.sleep(self.TIME_STEP)  # discretization
+            if self.is_rimea_4:
+                draw_detection_zones(self.detection_zones)
+                update_densities(self.detection_zones)
             self.update()  # graphical update of the grid
 
 

@@ -83,7 +83,7 @@ def rimea_test_1(grid_size = 40, screen_width = 500):
 
 
 def rimea_test_4(screen_width=500):
-    grid_size = 30
+    grid_size = 80
     app = Tk()
     grid = CellGrid(app, grid_size, int(screen_width / grid_size))
     grid.pack()
@@ -102,7 +102,7 @@ def rimea_test_4(screen_width=500):
     for i in range(min_row, max_row + 1):
         for j in range(min_col, max_col + 1):
             possible_cells.append((i, j))
-    num_pedestrians = len(possible_cells) // 2
+    num_pedestrians = len(possible_cells) // 20
     print(f"PRODUCING {num_pedestrians} PEDESTRIANS IN AN AREA OF {len(possible_cells)} CELLS")
     while num_pedestrians > 0:
         candidate_cell = random.choice(possible_cells)
@@ -214,4 +214,4 @@ def sample_age_speed(num_samples):
 
 
 if __name__ == "__main__":
-    rimea_test_4()
+    rimea_test_7()
