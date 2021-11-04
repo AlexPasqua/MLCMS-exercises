@@ -36,6 +36,7 @@ class Cell:
                         (self.ord + 1) * self.size]
         self.status = "Blank"  # 4 possible statuses: Blank, Person, Obstacle, Target
 
+
     def switch(self):
         """
         changes the fill modality: if fill is false then the next draw call will "Blank" the cell
@@ -96,17 +97,19 @@ class CellGrid(Canvas):
     """
     Object to handle the overall execution, maintaining the graphical grid and switching between different modalities
     """
-    def __init__(self, master, row_number, column_number, cell_size, *args, **kwargs):
-        self.canvas = Canvas.__init__(self, master, width=cell_size * column_number, height=cell_size * row_number,
+
+    def __init__(self, master, row_number, cell_size, *args, **kwargs):
+        self.canvas = Canvas.__init__(self, master, width=cell_size * row_number, height=cell_size * row_number,
                                       *args, **kwargs)
         self.master = master
         self.FILLED_COLOR_BG = "green"
         self.FILLED_COLOR_BORDER = "green"
-        self.TIME_STEP = 0.2  # needed for simulation
+        self.TIME_STEP = 0.1  # needed for simulation
         self.selected_pedestrian = None  # needed for free walk mode
         self.targets_cell_list = []
         self.pedestrian_cell_list = []  # lower level structure, containing only the Cell object
-        self.pedestrian_list = None      # higher level structure, containing Pedestrian object
+        self.pedestrian_list = None  # higher level structure, containing Pedestrian object
+        self.pedestrian_speeds = []  # list of pedestrian final speeds, needed for statistical aspect in RiMEA Test 7
         self.obstacles_cell_list = []
         self.cellSize = cell_size
         self.dijkstra_enabled = IntVar()  # variable associated to checkbox for enabling/disabling Dijkstra
@@ -121,8 +124,12 @@ class CellGrid(Canvas):
         self.buttons = []
         self.init_buttons()
 
+        self.MAX_GRID_SIZE = 100
+        self.grid_too_big = row_number >= self.MAX_GRID_SIZE
+
         # graphical grid init
         self.grid = []
+        column_number = row_number
         for row in range(row_number):
             line = [Cell(self, x=column, y=row, size=cell_size) for column in range(column_number)]
             self.grid.append(line)
@@ -140,7 +147,8 @@ class CellGrid(Canvas):
         self.bind("<Escape>", close_app)
 
         # draw grid
-        self.draw_empty_grid()
+        if not self.grid_too_big:
+            self.draw_empty_grid()
 
     def draw_empty_grid(self):
         for row in self.grid:
@@ -357,10 +365,10 @@ class CellGrid(Canvas):
 
         # create a Pedestrian list to access useful methods ("if" used for RiMEA Test 7)
         if self.pedestrian_list is None:
-            self.pedestrian_list = [Pedestrian(self, cell) for cell in self.pedestrian_cell_list]
+            self.pedestrian_list = [Pedestrian(self, cell, grid_too_big=self.grid_too_big) for cell in
+                                    self.pedestrian_cell_list]
 
         # continue simulating until all pedestrian have not reached a target
-        print(self.dijkstra_enabled.get())
         activate_dijkstra = True if self.dijkstra_enabled.get() == 1 else False
         while len(self.pedestrian_list) != 0:
             random.shuffle(self.pedestrian_list)  # to avoid giving advantage to the same Pedestrian all the time
@@ -368,17 +376,20 @@ class CellGrid(Canvas):
                 pedestrian.update_cost_function(planning_grid, dijkstra=activate_dijkstra)  # update local cost_matrix
                 planning_grid, pedestrian_has_ended = pedestrian.move()  # try to move (time constraints)
                 if pedestrian_has_ended:
+                    self.pedestrian_speeds.append(pedestrian.total_meters / pedestrian.total_time)
                     print("Pedestrian reached target in:", pedestrian.total_time, 'with a speed of:',
-                          pedestrian.total_meters / pedestrian.total_time, "(expected speed was: ", pedestrian.speed,")")
+                          self.pedestrian_speeds[-1], "(expected speed was: ", pedestrian.speed,
+                          ")")
                     self.pedestrian_list.remove(pedestrian)
 
             time.sleep(self.TIME_STEP)  # discretization
-            self.update()   # graphical update of the grid
+            if not self.grid_too_big:
+                self.update()  # graphical update of the grid
 
 
 if __name__ == "__main__":
     app = Tk()
-    grid = CellGrid(app, 10, 10, 50)
+    grid = CellGrid(app, 10, 50)
     grid.pack()
     grid.focus_set()  # to receive inputs form keyboard
     app.mainloop()

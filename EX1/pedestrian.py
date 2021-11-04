@@ -10,7 +10,8 @@ class Pedestrian:
     Object wrapping around Cell, allows for the agent's planning
     """
 
-    def __init__(self, grid, cell, speed=1.0):
+    def __init__(self, grid, cell, speed=1.0, grid_too_big=False):
+        self.grid_too_big=grid_too_big
         self.row = cell.ord
         self.col = cell.abs
         self.delta_row = None  # for planned movement in row axis
@@ -205,13 +206,15 @@ class Pedestrian:
         else:
             candidate_cell = grid[self.row + delta_row][self.col + delta_col]
             # make the current cell white
-            grid[self.row][self.col].switch()
-            grid[self.row][self.col].draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
+            if not self.grid_too_big:
+                grid[self.row][self.col].switch()
+                grid[self.row][self.col].draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
 
             # color the cell we're going to (if it is not a target)
             if not candidate_cell.status == "Target":
-                candidate_cell.switch()
-                candidate_cell.draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
+                if not self.grid_too_big:
+                    candidate_cell.switch()
+                    candidate_cell.draw(self.grid.FILLED_COLOR_BG, self.grid.FILLED_COLOR_BORDER)
             else:
                 # reached the objective
                 self.goal_achieved = True
