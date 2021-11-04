@@ -53,7 +53,7 @@ class CellGrid(Canvas):
 
         # attributes for RiMEA 4
         self.is_rimea_4 = is_rimea_4    # boolean to avoid some computation if not needed for RiMEA 4
-        self.detection_zones = init_detection_zones(self)   # detection zones for RiMEA 4
+        self.detection_zones = self.init_detection_zones()   # detection zones for RiMEA 4
 
         # memorize the cells that have been modified to avoid many switching of state during mouse motion.
         self.switched = []
@@ -309,15 +309,62 @@ class CellGrid(Canvas):
             time.sleep(self.TIME_STEP)  # discretization
 
             if self.is_rimea_4:
-                draw_detection_zones(self.detection_zones)
-                update_densities(self.detection_zones)
+                self.draw_detection_zones()
+                self.update_densities()
 
             self.update()  # graphical update of the grid
 
         self.pedestrian_list = None     # necessary in case of multiple simulations without closing the app
 
         if self.is_rimea_4:
-            get_final_metrics(self.detection_zones)
+            self.get_final_dectzones_metrics()
+
+    def init_detection_zones(self):
+        """
+        Initialize the detection zones for the RiMEA scenario 4
+        :return: the list of detection zones (DetectionZone objects)
+        """
+        grid_size = len(self.grid)
+        min_row = (grid_size // 2) - 1
+        max_row = (grid_size // 2) + 1
+        min_col = 14
+        max_col = 16
+        detection_zones = [DetectionZone(grid, min_row, max_row, min_col, max_col)]
+        min_col, max_col = min_col + 25, max_col + 25
+        detection_zones.append(DetectionZone(grid, min_row, max_row, min_col, max_col))
+        min_col, max_col = min_col + 25, max_col + 25
+        detection_zones.append(DetectionZone(grid, min_row, max_row, min_col, max_col))
+        return detection_zones
+
+    def draw_detection_zones(self):
+        """ Draw the detection zones on teh grid """
+        for dz in self.detection_zones:
+            dz.draw()
+
+    def update_densities(self):
+        """ Update the pedestrian density of each detection zone by calling its apposite method """
+        for dz in self.detection_zones:
+            dz.update_density()     # update pedestrian density for the current detection zone
+
+    def get_final_dectzones_metrics(self):
+        """
+        Get the final metrics from the detection zones: average speed, density and flow.
+        These are obtained getting the average metrics during the simulation for each detection zone and doing
+        the average per number of detection zones
+        """
+        avg_densities = []
+        avg_speeds = []
+        avg_flows = []
+        for dz in self.detection_zones:
+            dz.update_resulting_measures()
+            avg_densities.append(dz.avg_density)
+            avg_speeds.append(dz.avg_speed)
+            avg_flows.append(dz.avg_flow)
+
+        # print results
+        print(f"AVG_DENSITY: {sum(avg_densities) / len(avg_densities)}"
+              f"\nAVG_SPEED: {sum(avg_speeds) / len(avg_speeds)}"
+              f"\nAVG_FLOW: {sum(avg_flows) / len(avg_flows)}")
 
 
 if __name__ == "__main__":
