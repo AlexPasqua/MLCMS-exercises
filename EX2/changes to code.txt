@@ -1,0 +1,14 @@
+DOPO AVER FATTO BUILD:
+all'interno di SIRGroupModel (org.vadere.simulator.models.groups.sir) riga 137-139 (aggiunta dei pedestrian ai loro corretti gruppi iniziali)
+
+PER SISTEMARE IL COLORE:
+all'interno di src/org/vadere/gui/components/model/SimulationModel.java aggiunto i 3 colori (righe 23-25), l'inizializzazione corretta della hashmap contenente i colori (righe 34-37) e i metodi getter (in fondo al file)
+settato config.AgentColoring con il giusto parametro (di default è TARGET ma va settato a GROUP per chiamare il metodo corretto per la colorazione nel nostro caso) riga 32
+
+A QUESTO PUNTO LA COLORAZIONE E' CORRETTA DURANTE LA SIMULAZIONE
+
+
+
+PER IL SIGNIFICATO DI ON TOP: VERDE PIU PICCOLO, ROSSO PIU GRANDE, NON ABSORBING
+
+UML ON ONLY THE ADDED CLASSES, EVEN ONLY THE NAME OF CLASS WITH MAIN METHOD AND A BRIEF DESCROPTION OF WHAT IT DOES. SAME FOR THE PROCESSOR.	

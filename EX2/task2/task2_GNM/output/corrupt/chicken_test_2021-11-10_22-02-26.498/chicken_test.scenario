@@ -1,7 +1,8 @@
 {
-  "name" : "rimea1",
+  "name" : "chicken_test",
   "description" : "",
   "release" : "1.16",
+  "commithash" : "No version control commit hash available!",
   "processWriters" : {
     "files" : [ {
       "type" : "org.vadere.simulator.projects.dataprocessing.outputfile.EventtimePedestrianIdOutputFile",
@@ -98,7 +99,7 @@
       }
     },
     "attributesSimulation" : {
-      "finishTime" : 50.0,
+      "finishTime" : 100.0,
       "simTimeStepLength" : 0.1,
       "realTimeSimTimeRatio" : 0.1,
       "writeSimulationData" : true,
@@ -106,8 +107,8 @@
       "printFPS" : false,
       "digitsPerCoordinate" : 2,
       "useFixedSeed" : true,
-      "fixedSeed" : -9122920328102366019,
-      "simulationSeed" : 0
+      "fixedSeed" : 4138916422357504031,
+      "simulationSeed" : 4138916422357504031
     },
     "attributesPsychology" : {
       "usePsychologyLayer" : false,
@@ -121,8 +122,8 @@
         "bounds" : {
           "x" : 0.0,
           "y" : 0.0,
-          "width" : 50.0,
-          "height" : 50.0
+          "width" : 10.0,
+          "height" : 10.0
         },
         "boundingBoxWidth" : 0.5,
         "bounded" : true,
@@ -132,13 +133,13 @@
       "measurementAreas" : [ ],
       "stairs" : [ ],
       "targets" : [ {
-        "id" : 1,
-        "absorbing" : true,
+        "id" : 2,
+        "absorbing" : false,
         "shape" : {
-          "x" : 25.0,
-          "y" : 25.0,
-          "width" : 1.0,
-          "height" : 1.0,
+          "x" : 1.6,
+          "y" : -3.0,
+          "width" : 9.0,
+          "height" : 9.0,
           "type" : "RECTANGLE"
         },
         "waitingTime" : 0.0,
@@ -153,85 +154,38 @@
       "absorbingAreas" : [ ],
       "aerosolClouds" : [ ],
       "droplets" : [ ],
-      "sources" : [ ],
-      "dynamicElements" : [ {
-        "attributes" : {
-          "id" : 2,
-          "radius" : 0.2,
-          "densityDependentSpeed" : false,
-          "speedDistributionMean" : 1.34,
-          "speedDistributionStandardDeviation" : 0.26,
-          "minimumSpeed" : 0.5,
-          "maximumSpeed" : 2.2,
-          "acceleration" : 2.0,
-          "footstepHistorySize" : 4,
-          "searchRadius" : 1.0,
-          "walkingDirectionCalculation" : "BY_TARGET_CENTER",
-          "walkingDirectionSameIfAngleLessOrEqual" : 45.0
+      "sources" : [ {
+        "id" : 3,
+        "shape" : {
+          "x" : 1.9,
+          "y" : 1.9,
+          "width" : 6.1,
+          "height" : 6.1,
+          "type" : "RECTANGLE"
         },
-        "source" : null,
-        "targetIds" : [ 1 ],
-        "nextTargetListIndex" : 0,
-        "isCurrentTargetAnAgent" : false,
-        "position" : {
-          "x" : 25.0,
-          "y" : 5.0
-        },
-        "velocity" : {
-          "x" : 0.0,
-          "y" : 0.0
-        },
-        "freeFlowSpeed" : 1.8522156059160915,
-        "followers" : [ ],
-        "idAsTarget" : -1,
-        "isChild" : false,
-        "isLikelyInjured" : false,
-        "psychologyStatus" : {
-          "mostImportantStimulus" : null,
-          "threatMemory" : {
-            "allThreats" : [ ],
-            "latestThreatUnhandled" : false
-          },
-          "selfCategory" : "TARGET_ORIENTED",
-          "groupMembership" : "OUT_GROUP",
-          "knowledgeBase" : {
-            "knowledge" : [ ],
-            "informationState" : "NO_INFORMATION"
-          },
-          "perceivedStimuli" : [ ],
-          "nextPerceivedStimuli" : [ ]
-        },
-        "healthStatus" : {
-          "infectionStatus" : "SUSCEPTIBLE",
-          "lastInfectionStatusUpdateTime" : -1.0,
-          "pathogenAbsorbedLoad" : 0.0,
-          "startBreatheOutPosition" : null,
-          "respiratoryTimeOffset" : -1.0,
-          "breathingIn" : false,
-          "pathogenEmissionCapacity" : -1.0,
-          "pathogenAbsorptionRate" : -1.0,
-          "minInfectiousDose" : -1.0,
-          "exposedPeriod" : -1.0,
-          "infectiousPeriod" : -1.0,
-          "recoveredPeriod" : -1.0
-        },
-        "groupIds" : [ ],
-        "groupSizes" : [ ],
-        "agentsInGroup" : [ ],
-        "trajectory" : {
-          "footSteps" : [ ]
-        },
-        "modelPedestrianMap" : null,
-        "type" : "PEDESTRIAN"
+        "interSpawnTimeDistribution" : "org.vadere.state.scenario.ConstantDistribution",
+        "distributionParameters" : [ 1.0 ],
+        "spawnNumber" : 1000,
+        "maxSpawnNumberTotal" : -1,
+        "startTime" : 0.0,
+        "endTime" : 0.0,
+        "spawnAtRandomPositions" : true,
+        "spawnAtGridPositionsCA" : false,
+        "useFreeSpaceOnly" : true,
+        "targetIds" : [ 2 ],
+        "groupSizeDistribution" : [ 1.0 ],
+        "dynamicElementType" : "PEDESTRIAN",
+        "attributesPedestrian" : null
       } ],
+      "dynamicElements" : [ ],
       "attributesPedestrian" : {
         "radius" : 0.2,
         "densityDependentSpeed" : false,
         "speedDistributionMean" : 1.34,
         "speedDistributionStandardDeviation" : 0.26,
-        "minimumSpeed" : 0.5,
-        "maximumSpeed" : 2.2,
-        "acceleration" : 2.0,
+        "minimumSpeed" : 0.0,
+        "maximumSpeed" : 0.1,
+        "acceleration" : 0.0,
         "footstepHistorySize" : 4,
         "searchRadius" : 1.0,
         "walkingDirectionCalculation" : "BY_TARGET_CENTER",
