@@ -13,14 +13,22 @@ def read_scenario(path="scenarios/rimea6.scenario"):
         return scenario
 
 
-def add_pedestrian(scenario=None, scenario_path=None, output_path=None, id=None, find_min_free_id=True, targetIds=[],
-                   radius=0.2, densityDependentSpeed=False, speedDistributionMean=1.34,
-                   speedDistributionStandardDeviation=0.26, minimumSpeed=0.5, maximumSpeed=2.2, acceleration=2.0,
-                   footstepHistorySize=4, searchRadius=1.0, walkingDirectionCalculation="BY_TARGET_CENTER",
-                   walkingDirectionSameIfAngleLessOrEqual=45.0, nextTargetListIndex=0, position=(0, 0), velocity=(0, 0),
-                   freeFlowSpeed=1.8522156059160915, followers=[], idAsTarget=-1, infectionStatus="SUSCEPTIBLE",
-                   lastInfectionStatusUpdateTime=-1.0, pathogenAbsorbedLoad=0.0, groupIds=[], groupSizes=[],
-                   agentsInGroup=[], traj_footsteps=[]):
+def add_pedestrian(scenario=None, scenario_path=None, out_scen_name=None, output_path=None, id=None,
+                   find_min_free_id=True, targetIds=[], radius=0.2, densityDependentSpeed=False,
+                   speedDistributionMean=1.34, speedDistributionStandardDeviation=0.26, minimumSpeed=0.5,
+                   maximumSpeed=2.2, acceleration=2.0, footstepHistorySize=4, searchRadius=1.0,
+                   walkingDirectionCalculation="BY_TARGET_CENTER", walkingDirectionSameIfAngleLessOrEqual=45.0,
+                   nextTargetListIndex=0, position=(0, 0), velocity=(0, 0), freeFlowSpeed=1.8522156059160915,
+                   followers=[], idAsTarget=-1, infectionStatus="SUSCEPTIBLE", lastInfectionStatusUpdateTime=-1.0,
+                   pathogenAbsorbedLoad=0.0, groupIds=[], groupSizes=[], agentsInGroup=[], traj_footsteps=[]):
+    """
+    Add a pedestrian in a scenario.
+    :param scenario: the dictionary containing the data of the scenario where a pedestrian needs to be added
+    :param scenario_path: the path to a scenario file to be read (alternative to :param scenario:)
+    :param output_path: the path where to save the new scenario file
+    :param out_scen_name: name of the output scenario
+    All the other parameters are the ones to be written in the pedestrian's json file section.
+    """
     # 'scenario' and 'scenario_path' cannot be both None
     if scenario_path is None and scenario is None:
         raise AttributeError("One of 'scenario' and 'scenario_path' must be not None, got both None")
@@ -43,6 +51,10 @@ def add_pedestrian(scenario=None, scenario_path=None, output_path=None, id=None,
     if id is None:
         id = find_free_id(scenario, find_min_free_id=True)
 
+    # if target id not provided, if there is only 1 target, use its id, otherwise don't set one (pedestrian won't move)
+    if not targetIds and len(scenario['scenario']['topography']['targets']) == 1:
+        targetIds = [scenario['scenario']['topography']['targets'][0]['id']]
+
     # create a dictionary with the pedestrian's data (in the format used in the scenario's json file)
     ped = {
         "attributes": {
@@ -64,8 +76,8 @@ def add_pedestrian(scenario=None, scenario_path=None, output_path=None, id=None,
         "nextTargetListIndex": nextTargetListIndex,
         "isCurrentTargetAnAgent": False,
         "position": {
-            "x": position[0],
-            "y": position[1]
+            "x": float(position[0]),
+            "y": float(position[1])
         },
         "velocity": {
             "x": velocity[0],
@@ -122,6 +134,9 @@ def add_pedestrian(scenario=None, scenario_path=None, output_path=None, id=None,
     elif not output_path.endswith(".scenario"):  # add ".scenario" suffix to the output path if not present
         output_path += ".scenario"
 
+    if out_scen_name is not None:
+        scenario['name'] = out_scen_name
+
     # write the scenario file with the new pedestrian
     with open(output_path, 'w') as f:
         json.dump(scenario, f, indent='  ')
@@ -166,7 +181,9 @@ def find_free_id(scenario: dict, find_min_free_id=True):
 
 if __name__ == '__main__':
     add_pedestrian(
-        scenario_path="../task1/scenarios/rimea1.scenario",
-        output_path="scenarios/pippo.scenario",
-        position=(40, 40)
+        scenario_path="../task1/scenarios/rimea6.scenario",
+        out_scen_name="task3",
+        output_path="scenarios/task3.scenario",
+        position=(8, 2),
+        targetIds=[5]
     )
