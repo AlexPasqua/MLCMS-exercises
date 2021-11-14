@@ -7,6 +7,11 @@ settato config.AgentColoring con il giusto parametro (di default è TARGET ma va
 
 A QUESTO PUNTO LA COLORAZIONE E' CORRETTA DURANTE LA SIMULAZIONE
 
+MA NON DURANTE LA POST VISUALIZZAZIONE!!
+
+PER RENDERE PIU' EFFICIENTE LA SIMULAZIONE/UPDATE DEI PEDESTRIAN (TASK 4.4):
+org.vadere.simulator.models.groups.sir.SirGroupModel funzione update (la precedente è sotto commentata)
+
 
 
 PER IL SIGNIFICATO DI ON TOP: VERDE PIU PICCOLO, ROSSO PIU GRANDE, NON ABSORBING
