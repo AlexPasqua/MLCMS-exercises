@@ -185,24 +185,25 @@ public class SIRGroupModel extends AbstractGroupModel<SIRGroup> {
 	}
 
 	@Override
-	public void update(final double simTimeInSec) {
+	public void update(final double realTimeToSimulateInSec) {
 		// check the positions of all pedestrians and switch groups to INFECTED (or REMOVED).
 		DynamicElementContainer<Pedestrian> c = topography.getPedestrianDynamicElements();
-		System.out.println("HALLO " + simTimeInSec + " " + this.getPotentialFieldTarget());
-
-		if (c.getElements().size() > 0) {
-			for(Pedestrian p : c.getElements()) {
-				// loop over neighbors and set infected if we are close
-				// loop ONLY on the real neighbours
-				List<Pedestrian> pNeighbours = c.getCellsElements().getObjects(p.getPosition(), attributesSIRG.getInfectionMaxDistance());
-				for(Pedestrian p_neighbor : pNeighbours) {
-					if(p == p_neighbor || getGroup(p_neighbor).getID() != SIRType.ID_INFECTED.ordinal())
-						continue;
-					if (this.random.nextDouble() < attributesSIRG.getInfectionRate()) {
-						SIRGroup g = getGroup(p);
-						if (g.getID() == SIRType.ID_SUSCEPTIBLE.ordinal()) {
-							elementRemoved(p);
-							assignToGroup(p, SIRType.ID_INFECTED.ordinal());
+		// a FOR cycle to simulate all together the many realtime steps that are simulated into a single simTimeStep
+		for(int i = 0; i < realTimeToSimulateInSec; i++) {
+			if (c.getElements().size() > 0) {
+				for (Pedestrian p : c.getElements()) {
+					// loop over neighbors and set infected if we are close
+					// loop ONLY on the real neighbours
+					List<Pedestrian> pNeighbours = c.getCellsElements().getObjects(p.getPosition(), attributesSIRG.getInfectionMaxDistance());
+					for (Pedestrian p_neighbor : pNeighbours) {
+						if (p == p_neighbor || getGroup(p_neighbor).getID() != SIRType.ID_INFECTED.ordinal())
+							continue;
+						if (this.random.nextDouble() < attributesSIRG.getInfectionRate()) {
+							SIRGroup g = getGroup(p);
+							if (g.getID() == SIRType.ID_SUSCEPTIBLE.ordinal()) {
+								elementRemoved(p);
+								assignToGroup(p, SIRType.ID_INFECTED.ordinal());
+							}
 						}
 					}
 				}
