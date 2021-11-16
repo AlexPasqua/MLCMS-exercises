@@ -484,9 +484,9 @@ public class Simulation implements ControllerProvider{
 				// This implementation assumes that a real time step happens at a discretization level of ONE SECOND
 				if(m instanceof SIRGroupModel) {
 					double simTimeStepLength = this.attributesSimulation.getSimTimeStepLength();
-					double realTimeSimTimeRatio = this.attributesSimulation.getRealTimeSimTimeRatio();
-					double secondsSimulatedInTimeStep = simTimeStepLength / realTimeSimTimeRatio;
-					m.update(secondsSimulatedInTimeStep);
+					// execute only one update per second passed
+					if((int)(simTimeInSec - simTimeStepLength) < (int) (simTimeInSec))
+						m.update(simTimeInSec);
 				}
 				else {
 					m.update(simTimeInSec);

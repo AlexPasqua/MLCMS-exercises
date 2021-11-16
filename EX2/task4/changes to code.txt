@@ -12,6 +12,13 @@ MA NON DURANTE LA POST VISUALIZZAZIONE!!
 PER RENDERE PIU' EFFICIENTE LA SIMULAZIONE/UPDATE DEI PEDESTRIAN (TASK 4.4):
 org.vadere.simulator.models.groups.sir.SirGroupModel funzione update (la precedente è sotto commentata)
 
+TO MAKE POSSIBLE THE INFECTED INJECTED THANKS TO ALEX CODE: 
+org.vadere.simulator.models.groups.sir.SIRGroupModel 
+added if statement in assignToGroup(ped)
+
+TO MAKE THE DECOUPLING POSSIBLE
+org.vadere.simulator.control.simulation.Simulation.java in updateLocomotionLayer
+changed lines 482-493, giving different behaviour when the model is a SIRGroupModel, doing the infection update only if a full second has passed from last update!
 
 
 PER IL SIGNIFICATO DI ON TOP: VERDE PIU PICCOLO, ROSSO PIU GRANDE, NON ABSORBING

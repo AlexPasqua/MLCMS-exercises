@@ -62,15 +62,14 @@ public class SIRGroupModel extends AbstractGroupModel<SIRGroup> {
 	}
 
 	private int getFreeGroupId() {
-		if(this.random.nextDouble() < this.attributesSIRG.getInfectionRate()
-        || this.totalInfected < this.attributesSIRG.getInfectionsAtStart()) {
+		if(this.totalInfected < this.attributesSIRG.getInfectionsAtStart()) {
 			// look if a group of infected is still not present (first infection)
 			if(!getGroupsById().containsKey(SIRType.ID_INFECTED.ordinal()))
 			{
 				SIRGroup g = getNewGroup(SIRType.ID_INFECTED.ordinal(), Integer.MAX_VALUE/2);
 				getGroupsById().put(SIRType.ID_INFECTED.ordinal(), g);
 			}
-            this.totalInfected += 1;
+			this.totalInfected += 1;
 			return SIRType.ID_INFECTED.ordinal();
 		}
 		else{
@@ -79,8 +78,8 @@ public class SIRGroupModel extends AbstractGroupModel<SIRGroup> {
 				SIRGroup g = getNewGroup(SIRType.ID_SUSCEPTIBLE.ordinal(), Integer.MAX_VALUE/2);
 				getGroupsById().put(SIRType.ID_SUSCEPTIBLE.ordinal(), g);
 			}
-			return SIRType.ID_SUSCEPTIBLE.ordinal();
 		}
+		return SIRType.ID_SUSCEPTIBLE.ordinal();
 	}
 
 
@@ -133,7 +132,6 @@ public class SIRGroupModel extends AbstractGroupModel<SIRGroup> {
 		DynamicElementContainer<Pedestrian> c = topography.getPedestrianDynamicElements();
 
 		if (c.getElements().size() > 0) {
-			// TODO: fill in code to assign pedestrians in the scenario at the beginning (i.e., not created by a source)
             //  to INFECTED or SUSCEPTIBLE groups.
 			for(Pedestrian ped : c.getElements()){
 				assignToGroup(ped);
@@ -152,6 +150,9 @@ public class SIRGroupModel extends AbstractGroupModel<SIRGroup> {
 
 	protected void assignToGroup(Pedestrian ped) {
 		int groupId = getFreeGroupId();
+		// if is needed to avoid reassignment of possible preexecution assigned pedestrians
+		if(ped.getGroupIds().size() == 1)
+				groupId = ped.getGroupIds().get(0);
 		assignToGroup(ped, groupId);
 	}
 
@@ -185,48 +186,32 @@ public class SIRGroupModel extends AbstractGroupModel<SIRGroup> {
 	}
 
 	@Override
-	public void update(final double realTimeToSimulateInSec) {
+	public void update(final double simTimeInSec) {
 		// check the positions of all pedestrians and switch groups to INFECTED (or REMOVED).
 		DynamicElementContainer<Pedestrian> c = topography.getPedestrianDynamicElements();
-		// a FOR cycle to simulate all together the many realtime steps that are simulated into a single simTimeStep
-		for(int i = 0; i < realTimeToSimulateInSec; i++) {
-			if (c.getElements().size() > 0) {
-				for (Pedestrian p : c.getElements()) {
-					// loop over neighbors and set infected if we are close
-					// loop ONLY on the real neighbours
-					List<Pedestrian> pNeighbours = c.getCellsElements().getObjects(p.getPosition(), attributesSIRG.getInfectionMaxDistance());
-					for (Pedestrian p_neighbor : pNeighbours) {
-						if (p == p_neighbor || getGroup(p_neighbor).getID() != SIRType.ID_INFECTED.ordinal())
-							continue;
-						if (this.random.nextDouble() < attributesSIRG.getInfectionRate()) {
-							SIRGroup g = getGroup(p);
-							if (g.getID() == SIRType.ID_SUSCEPTIBLE.ordinal()) {
-								elementRemoved(p);
-								assignToGroup(p, SIRType.ID_INFECTED.ordinal());
-							}
+		if (c.getElements().size() > 0) {
+			for (Pedestrian p : c.getElements()) {
+				// loop over neighbors and set infected if we are close
+
+				// if p is already infected then no need to execute
+				if (getGroup(p).getID() == SIRType.ID_INFECTED.ordinal())
+					continue;
+				// loop ONLY on the real neighbours
+				List<Pedestrian> pNeighbours = c.getCellsElements().getObjects(p.getPosition(),
+						attributesSIRG.getInfectionMaxDistance());
+
+				for (Pedestrian p_neighbor : pNeighbours) {
+					if (p == p_neighbor || getGroup(p_neighbor).getID() != SIRType.ID_INFECTED.ordinal())
+						continue;
+					if (this.random.nextDouble() < attributesSIRG.getInfectionRate()) {
+						SIRGroup g = getGroup(p);
+						if (g.getID() == SIRType.ID_SUSCEPTIBLE.ordinal()) {
+							elementRemoved(p);
+							assignToGroup(p, SIRType.ID_INFECTED.ordinal());
 						}
 					}
 				}
 			}
 		}
-
-		//if (c.getElements().size() > 0) {
-		//	for(Pedestrian p : c.getElements()) {
-		//		// loop over neighbors and set infected if we are close
-		//		for(Pedestrian p_neighbor : c.getElements()) {
-		//			if(p == p_neighbor || getGroup(p_neighbor).getID() != SIRType.ID_INFECTED.ordinal())
-		//				continue;
-		//			double dist = p.getPosition().distance(p_neighbor.getPosition());
-		//			if (dist < attributesSIRG.getInfectionMaxDistance() &&
-		//					this.random.nextDouble() < attributesSIRG.getInfectionRate()) {
-		//				SIRGroup g = getGroup(p);
-		//				if (g.getID() == SIRType.ID_SUSCEPTIBLE.ordinal()) {
-		//					elementRemoved(p);
-		//					assignToGroup(p, SIRType.ID_INFECTED.ordinal());
-		//				}
-		//			}
-		//		}
-		//	}
-		//}
 	}
 }
