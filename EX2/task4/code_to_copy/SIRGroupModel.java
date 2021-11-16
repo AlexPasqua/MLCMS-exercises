@@ -191,23 +191,26 @@ public class SIRGroupModel extends AbstractGroupModel<SIRGroup> {
 		DynamicElementContainer<Pedestrian> c = topography.getPedestrianDynamicElements();
 		if (c.getElements().size() > 0) {
 			for (Pedestrian p : c.getElements()) {
-				// loop over neighbors and set infected if we are close
-
-				// if p is already infected then no need to execute
-				if (getGroup(p).getID() == SIRType.ID_INFECTED.ordinal())
-					continue;
-				// loop ONLY on the real neighbours
-				List<Pedestrian> pNeighbours = c.getCellsElements().getObjects(p.getPosition(),
-						attributesSIRG.getInfectionMaxDistance());
-
-				for (Pedestrian p_neighbor : pNeighbours) {
-					if (p == p_neighbor || getGroup(p_neighbor).getID() != SIRType.ID_INFECTED.ordinal())
-						continue;
-					if (this.random.nextDouble() < attributesSIRG.getInfectionRate()) {
-						SIRGroup g = getGroup(p);
-						if (g.getID() == SIRType.ID_SUSCEPTIBLE.ordinal()) {
-							elementRemoved(p);
-							assignToGroup(p, SIRType.ID_INFECTED.ordinal());
+				// if p is already infected, check if it gets recovered
+				if (getGroup(p).getID() == SIRType.ID_INFECTED.ordinal()) {
+					if (this.random.nextDouble() < attributesSIRG.getRecoveryRate()) {
+						elementRemoved(p);
+						assignToGroup(p, SIRType.ID_RECOVERED.ordinal());
+					}
+				}
+				// if p is susceptible, check its neighbours and if someone is infected, p might get infected too
+				else if (getGroup(p).getID() == SIRType.ID_SUSCEPTIBLE.ordinal()){
+					// loop ONLY on the real neighbours
+					List<Pedestrian> pNeighbours = c.getCellsElements().getObjects(p.getPosition(), attributesSIRG.getInfectionMaxDistance());
+					for (Pedestrian p_neighbor : pNeighbours) {
+						if (p == p_neighbor || getGroup(p_neighbor).getID() != SIRType.ID_INFECTED.ordinal())
+							continue;
+						if (this.random.nextDouble() < attributesSIRG.getInfectionRate()) {
+							SIRGroup g = getGroup(p);
+							if (g.getID() == SIRType.ID_SUSCEPTIBLE.ordinal()) {
+								elementRemoved(p);
+								assignToGroup(p, SIRType.ID_INFECTED.ordinal());
+							}
 						}
 					}
 				}
