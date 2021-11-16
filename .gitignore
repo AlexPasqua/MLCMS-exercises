@@ -2,4 +2,7 @@
 venv/
 __pycache__/
 .ipynb_checkpoints/
-EX2/vadere/
+
+Vadere/
+EX2/vadere/*
+*/vadere.project
