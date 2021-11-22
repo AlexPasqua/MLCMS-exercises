@@ -10,6 +10,7 @@ if __name__ == '__main__':
 
     w = 3
     Y, X = np.mgrid[-w:w:100j, -w:w:100j]
+    # Y, X = np.mgrid[0:3, 0:5]
 
     # alpha is the system's parameter,
     # to get all the phase portraits in the picture from the book, change alpha and also the sign of the -1/4 element
@@ -33,6 +34,6 @@ if __name__ == '__main__':
     # ax0.streamplot(X, Y, U, V, density=[0.5, 1])
     # ax0.set_title('Streamplot for linear vector field A*x')
     # ax0.set_aspect(1)
-    plt.streamplot(X, Y, U, V, density=1)
+    plt.streamplot(X, Y, U, V, density=.1)
     plt.title('Streamplot for linear vector field A*x')
     plt.show()
