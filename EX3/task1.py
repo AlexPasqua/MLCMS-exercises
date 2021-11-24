@@ -34,6 +34,6 @@ if __name__ == '__main__':
     # ax0.streamplot(X, Y, U, V, density=[0.5, 1])
     # ax0.set_title('Streamplot for linear vector field A*x')
     # ax0.set_aspect(1)
-    plt.streamplot(X, Y, U, V, density=.1)
+    plt.streamplot(X, Y, U, V, density=.5)
     plt.title('Streamplot for linear vector field A*x')
     plt.show()
