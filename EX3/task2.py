@@ -28,6 +28,6 @@ if __name__ == '__main__':
             # print(type(fixed_points[i][j]), fixed_points[i][j])
             if not isinstance(fixed_points[i][j], core.numbers.Float):
                 fixed_points[i][j] = None
-        plt.plot(fixed_points_rel_alphas[i], fixed_points[i], 'black')
+        plt.plot(fixed_points_rel_alphas[i], fixed_points[i])
     plt.xlim(alphas[0], alphas[-1])
     plt.show()
