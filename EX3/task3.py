@@ -64,33 +64,51 @@ if __name__ == '__main__':
     plot_traj(np.array([0, 2]))
 
     # TASK 3.3
-    x = Symbol('x')
-    alphas_one = np.arange(-2, 2.1, 0.01)
-    alphas_two = np.arange(-2, 2.1, 0.01)
-    fixed_points = {}
-    fixed_points_rel_alphas_one = {}
-    fixed_points_rel_alphas_two = {}
-    for a1 in alphas_one:
-        print(a1)
-        for a2 in alphas_two:
-            sol = solve(a1 + a2*x - x**3, x)
-            for i, single_sol in enumerate(sol):
-                if i not in fixed_points:
-                    fixed_points[i] = [single_sol]
-                    fixed_points_rel_alphas_one[i] = [Float(a1)]
-                    fixed_points_rel_alphas_two[i] = [Float(a2)]
-                else:
-                    fixed_points[i].append(single_sol)
-                    fixed_points_rel_alphas_one[i].append(Float(a1))
-                    fixed_points_rel_alphas_two[i].append(Float(a2))
+    # x = Symbol('x')
+    # alphas_one = np.arange(-2, 2.1, 0.01)
+    # alphas_two = np.arange(-2, 2.1, 0.01)
+    # fixed_points = {}
+    # fixed_points_rel_alphas_one = {}
+    # fixed_points_rel_alphas_two = {}
+    # for a1 in alphas_one:
+    #     print(a1)
+    #     for a2 in alphas_two:
+    #         sol = solve(a1 + a2*x - x**3, x)
+    #         for i, single_sol in enumerate(sol):
+    #             if i not in fixed_points:
+    #                 fixed_points[i] = [single_sol]
+    #                 fixed_points_rel_alphas_one[i] = [Float(a1)]
+    #                 fixed_points_rel_alphas_two[i] = [Float(a2)]
+    #             else:
+    #                 fixed_points[i].append(single_sol)
+    #                 fixed_points_rel_alphas_one[i].append(Float(a1))
+    #                 fixed_points_rel_alphas_two[i].append(Float(a2))
+    #
+    # # postprocessing
+    # ax = plt.axes(projection='3d')
+    # for i in sorted(fixed_points.keys()):
+    #     for j in range(len(fixed_points[i])):
+    #         # print(type(fixed_points[i][j]), fixed_points[i][j])
+    #         if not isinstance(fixed_points[i][j], core.numbers.Float):
+    #             fixed_points[i][j] = 0
+    #     print(len(fixed_points[i]), len(fixed_points_rel_alphas_one[i]), len(fixed_points_rel_alphas_two[i]))
+    #     ax.plot3D(fixed_points_rel_alphas_one[i], fixed_points_rel_alphas_two[i], fixed_points[i])
+    # plt.show()
 
-    # postprocessing
+    # TASK 3.3
+    # dx = a1 + a2*x - x**3
+    alphas_two = np.arange(-5, 5.1, 0.1)
+    xs = np.arange(-5, 5.1, 0.1)
+    a1s = []
+    a2s = []
+    xss = []
+    for a2 in alphas_two:
+        print(a2)
+        for x in xs:
+            a2s.append(a2)
+            xss.append(x)
+            a1s.append(-a2 * x + x ** 3)
     ax = plt.axes(projection='3d')
-    for i in sorted(fixed_points.keys()):
-        for j in range(len(fixed_points[i])):
-            # print(type(fixed_points[i][j]), fixed_points[i][j])
-            if not isinstance(fixed_points[i][j], core.numbers.Float):
-                fixed_points[i][j] = 0
-        print(len(fixed_points[i]), len(fixed_points_rel_alphas_one[i]), len(fixed_points_rel_alphas_two[i]))
-        ax.plot3D(fixed_points_rel_alphas_one[i], fixed_points_rel_alphas_two[i], fixed_points[i])
+    print(len(a1s), "\n\n", len(a2s), "\n\n", len(xss))
+    ax.scatter(a1s, a2s, xss)
     plt.show()
