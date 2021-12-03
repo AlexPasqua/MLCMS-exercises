@@ -196,7 +196,7 @@ def logistic(r, x):
     return r * x * (1 - x)
 
 
-def plot_logistic_map_bifurcations(r, x0, n, ax=None):
+def logistic_map_cobweb_plot(r, x0, n, ax=None):
     # Plot the function and the
     # y=x diagonal line.
     t = np.linspace(0, 1)
@@ -220,3 +220,28 @@ def plot_logistic_map_bifurcations(r, x0, n, ax=None):
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.set_title(f"$r={r:.1f}, \, x_0={x0:.1f}$")
+
+
+def plot_logistic_map_bifurcations(min_r: float = 0., max_r: float = 4.):
+    """
+    Plots the bifurcations of the logistic map system
+    :param min_r: minimum r to test the system with
+    :param max_r: maximum r to test the system with
+    """
+    n = 5000  # number of runs
+    r = np.linspace(min_r, max_r, n)
+    iterations = 1000  # number of steps per run
+    last = 100  # number of steps, from the last one, to plot for each run
+    x = 1e-5 * np.ones(n)  # starting x for each run
+
+    fig, ax = plt.subplots(1, 1, figsize=(8, 8), sharex=True)
+    for i in range(iterations):
+        x = logistic(r, x)  # compute a step for each run
+        # if we're in the last 'last' iterations, plot the points for each run
+        if i >= (iterations - last):
+            ax.plot(r, x, ',k', alpha=.25)
+    ax.set_title("Logistic map bifurcation diagram")
+    ax.set_xlabel("r")
+    ax.set_ylabel("x")
+    plt.tight_layout()
+    plt.show()

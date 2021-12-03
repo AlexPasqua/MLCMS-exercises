@@ -1,13 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utilities import logistic, plot_logistic_map_bifurcations
+from utilities import logistic, logistic_map_cobweb_plot
 
 if __name__ == '__main__':
+    # TODO: decidi cosa fare con questa sezione -> è quella cosa che fa vedere i punti che saltano di qua e di là
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), sharey=True)
-    plot_logistic_map_bifurcations(2.5, .1, 10, ax=ax1)
-    plot_logistic_map_bifurcations(3.5, .1, 10, ax=ax2)
+    logistic_map_cobweb_plot(2.5, .1, 10, ax=ax1)
+    logistic_map_cobweb_plot(3.5, .1, 10, ax=ax2)
     plt.show()
+    exit()
 
     # TASK 4.1
     n = 5000
