@@ -5,7 +5,8 @@ from sympy import Symbol, core
 from sympy.solvers import solve
 
 
-def create_phase_portrait_matrix(A: np.ndarray, alpha: float, title_suffix: str, save_plots=False, save_path: str = None, display=True):
+def create_phase_portrait_matrix(A: np.ndarray, alpha: float, title_suffix: str, save_plots=False,
+                                 save_path: str = None, display=True):
     """
     Plots the phase portrait of the linear system Ax, where A is a 2x2 matrix and x is a 2-dim vector
     :param A: system's 2x2 matrix
@@ -15,7 +16,7 @@ def create_phase_portrait_matrix(A: np.ndarray, alpha: float, title_suffix: str,
     :param save_path: path where to save the plots if save_plots is True
     :param display: if True, display the plots
     """
-    w = 3   # width
+    w = 3  # width
     Y, X = np.mgrid[-w:w:100j, -w:w:100j]
     eigenvalues = np.linalg.eigvals(A)
     print("Eigenvalues of A: ", eigenvalues)
@@ -31,10 +32,11 @@ def create_phase_portrait_matrix(A: np.ndarray, alpha: float, title_suffix: str,
     if save_plots:
         plt.savefig(save_path)
 
+
 def create_bifurcation_diagram_1D(f_to_solve: str, min_alpha=-2, max_alpha=2.1, alpha_step=0.1):
     """
-        Plots the bifurcation diagram of a given function to solve
-        :param f_to_solve: string to represent the function to solve, based on having 'x' as variable
+    Plots the bifurcation diagram of a given function to solve
+    :param f_to_solve: string to represent the function to solve, based on having 'x' as variable
     """
     x = Symbol('x')
     alphas = np.arange(min_alpha, max_alpha, alpha_step)
@@ -54,13 +56,16 @@ def create_bifurcation_diagram_1D(f_to_solve: str, min_alpha=-2, max_alpha=2.1, 
     # postprocessing
     for i in sorted(fixed_points.keys()):
         for j in range(len(fixed_points[i])):
-            if not isinstance(fixed_points[i][j], core.numbers.Float) and not isinstance(fixed_points[i][j], core.numbers.Integer):
+            if not isinstance(fixed_points[i][j], core.numbers.Float) and not isinstance(fixed_points[i][j],
+                                                                                         core.numbers.Integer):
                 fixed_points[i][j] = None
         plt.scatter(fixed_points_rel_alphas[i], fixed_points[i])
     plt.xlim(alphas[0], alphas[-1])
     plt.show()
 
-def create_phase_portrait_derivative(system: list, alpha: float, title_suffix: str, save_plots=False, save_path: str = None, display=True, fig_size=10):
+
+def create_phase_portrait_derivative(system: list, alpha: float, title_suffix: str, save_plots=False,
+                                     save_path: str = None, display=True, fig_size=10):
     """
     Plots the phase portrait of the given 'system', where 'system' is a 2 dimensional system given as couple of strings
     :param system: system ODEs
@@ -72,7 +77,7 @@ def create_phase_portrait_derivative(system: list, alpha: float, title_suffix: s
     :param fig_size: gives width and height of plotted figure
     """
     # check if given parameters are acceptable
-    if len(system) != 2 :
+    if len(system) != 2:
         print("A 2 ODE system is required.")
         return
     # setting up grid width/height
@@ -96,6 +101,7 @@ def create_phase_portrait_derivative(system: list, alpha: float, title_suffix: s
         plt.show()
     if save_plots:
         plt.savefig(save_path)
+
 
 def plot_traj(system: list, start_pos, alpha=1, ts=1e-3, iter_num=10000, fig_size=10):
     """
@@ -129,6 +135,7 @@ def plot_traj(system: list, start_pos, alpha=1, ts=1e-3, iter_num=10000, fig_siz
     plt.ylim(-w, w)
     plt.show()
 
+
 def plot_cusp_bifurcation(alpha_two_limit: float, x_limit: float, n: int, fig_size=10):
     """
     Function to plot the cusp bifurcation, in 2D and 3D.
@@ -146,7 +153,7 @@ def plot_cusp_bifurcation(alpha_two_limit: float, x_limit: float, n: int, fig_si
     x_values = []
     for a2, x in zip(alphas_two_sampled, x_values_sampled):
         # evaluate alphas_1 reversing the equation (dx = a1 + a2*x - x**3 = 0)
-        alphas_one.append(-a2*x + x**3)
+        alphas_one.append(-a2 * x + x ** 3)
         alphas_two.append(a2)
         x_values.append(x)
     # round the values otherwise the bifurcation is not evident because of floating point precision (this causes some little artifacts)
@@ -164,12 +171,12 @@ def plot_cusp_bifurcation(alpha_two_limit: float, x_limit: float, n: int, fig_si
     a1_to_plot = {}
     a2_to_plot = {}
     for k, v in alphas_by_num.items():
-        if v-1 in a1_to_plot:
-            a1_to_plot[v-1].append(k[0])
-            a2_to_plot[v-1].append(k[1])
+        if v - 1 in a1_to_plot:
+            a1_to_plot[v - 1].append(k[0])
+            a2_to_plot[v - 1].append(k[1])
         else:
-            a1_to_plot[v-1] = [k[0]]
-            a2_to_plot[v-1] = [k[1]]
+            a1_to_plot[v - 1] = [k[0]]
+            a2_to_plot[v - 1] = [k[1]]
     # plot with blue color the couples with only one steady point, with orange the rest (they should only be two, but the rounding creates artifacts)
     for k in a1_to_plot.keys():
         c = 'blue' if k == 0 else 'orange'
@@ -182,3 +189,34 @@ def plot_cusp_bifurcation(alpha_two_limit: float, x_limit: float, n: int, fig_si
     ax.scatter(alphas_one, alphas_two, x_values, cmap='viridis', c=alphas_two)
     ax.set_title("3D cusp bifurcation - alpha_1 and alpha_2 at the base")
     plt.show()
+
+
+def logistic(r, x):
+    """ Computes the logistic function (for the system "logistic map") """
+    return r * x * (1 - x)
+
+
+def plot_logistic_map_bifurcations(r, x0, n, ax=None):
+    # Plot the function and the
+    # y=x diagonal line.
+    t = np.linspace(0, 1)
+    ax.plot(t, logistic(r, t), 'k', lw=2)
+    ax.plot([0, 1], [0, 1], 'k', lw=2)
+
+    # Recursively apply y=f(x) and plot two lines:
+    # (x, x) -> (x, y)
+    # (x, y) -> (y, y)
+    x = x0
+    for i in range(n):
+        y = logistic(r, x)
+        # Plot the two lines.
+        ax.plot([x, x], [x, y], 'k', lw=1)
+        ax.plot([x, y], [y, y], 'k', lw=1)
+        # Plot the positions with increasing
+        # opacity.
+        ax.plot([x], [y], 'ok', ms=10, alpha=(i + 1) / n)
+        x = y
+
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_title(f"$r={r:.1f}, \, x_0={x0:.1f}$")
