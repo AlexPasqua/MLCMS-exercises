@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
 from sympy import Symbol, core
+from typing import Tuple
 from sympy.solvers import solve
 
 
@@ -245,3 +245,17 @@ def plot_logistic_map_bifurcations(min_r: float = 0., max_r: float = 4.):
     ax.set_ylabel("x")
     plt.tight_layout()
     plt.show()
+
+
+def lorenz(start_pt: Tuple[int, int, int], s=10, r=28, b=2.667):
+    """
+    :param start_pt: starting point in 3-dimensional space
+    :param s, r, b: parameters of the Lorenz attractor (usually indicated with the Greek letters sigma, ro, beta)
+    :returns: x_dot, y_dot, z_dot: values of the lorenz attractor's partial derivatives at the point start_pt
+    """
+    # break down the starting point start_pt into 3 variables representing a dimension each, for simplicity
+    x, y, z = start_pt[0], start_pt[1], start_pt[2]
+    x_dot = s*(y - x)
+    y_dot = r*x - y - x*z
+    z_dot = x*y - b*z
+    return x_dot, y_dot, z_dot
