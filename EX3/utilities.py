@@ -262,7 +262,7 @@ def lorenz_step(start_pt: Tuple[int, int, int], s=10, b=2.667, r=28):
     return x_dot, y_dot, z_dot
 
 
-def lorenz_traj(dt=.01, n_steps=10000, start_x=(10, 10, 10), s=10, b=2.667, r=28):
+def lorenz_traj(dt=.01, n_steps=10000, start_x=(10, 10, 10), s=10, b=2.667, r=28, plot=True):
     # Need one more slot for the initial values
     xs = np.empty(n_steps + 1)
     ys = np.empty(n_steps + 1)
@@ -287,3 +287,11 @@ def lorenz_traj(dt=.01, n_steps=10000, start_x=(10, 10, 10), s=10, b=2.667, r=28
     ax.set_zlabel("Z Axis")
     ax.set_title("Lorenz Attractor")
     plt.show()
+
+    # create list of the 3D points along the trajectory
+    traj_pts = [(xs[i], ys[i], zs[i]) for i in range(len(xs))]
+    return np.array(traj_pts)
+
+
+if __name__ == '__main__':
+    print(lorenz_traj().shape)
