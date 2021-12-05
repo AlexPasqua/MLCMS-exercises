@@ -196,12 +196,12 @@ def logistic(r, x):
     return r * x * (1 - x)
 
 
-def logistic_map_cobweb_plot(r, x0, n, ax=None):
+def logistic_map_cobweb_plot(r, x0, n):
     # Plot the function and the
     # y=x diagonal line.
     t = np.linspace(0, 1)
-    ax.plot(t, logistic(r, t), 'k', lw=2)
-    ax.plot([0, 1], [0, 1], 'k', lw=2)
+    plt.plot(t, logistic(r, t), 'k', lw=2)
+    plt.plot([0, 1], [0, 1], 'k', lw=2)
 
     # Recursively apply y=f(x) and plot two lines:
     # (x, x) -> (x, y)
@@ -210,16 +210,17 @@ def logistic_map_cobweb_plot(r, x0, n, ax=None):
     for i in range(n):
         y = logistic(r, x)
         # Plot the two lines.
-        ax.plot([x, x], [x, y], 'k', lw=1)
-        ax.plot([x, y], [y, y], 'k', lw=1)
+        plt.plot([x, x], [x, y], 'k', lw=1)
+        plt.plot([x, y], [y, y], 'k', lw=1)
         # Plot the positions with increasing
         # opacity.
-        ax.plot([x], [y], 'ok', ms=10, alpha=(i + 1) / n)
+        plt.plot([x], [y], 'ok', ms=10, alpha=(i + 1) / n)
         x = y
 
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    ax.set_title(f"$r={r:.1f}, \, x_0={x0:.1f}$")
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
+    plt.title(f"$r={r:.1f}, \, x_0={x0:.1f}$")
+    plt.show()
 
 
 def plot_logistic_map_bifurcations(min_r: float = 0., max_r: float = 4.):
@@ -255,7 +256,7 @@ def lorenz(start_pt: Tuple[int, int, int], s=10, r=28, b=2.667):
     """
     # break down the starting point start_pt into 3 variables representing a dimension each, for simplicity
     x, y, z = start_pt[0], start_pt[1], start_pt[2]
-    x_dot = s*(y - x)
-    y_dot = r*x - y - x*z
-    z_dot = x*y - b*z
+    x_dot = s * (y - x)
+    y_dot = r * x - y - x * z
+    z_dot = x * y - b * z
     return x_dot, y_dot, z_dot
