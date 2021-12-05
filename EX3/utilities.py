@@ -274,7 +274,7 @@ def lorenz_traj(dt=.01, n_steps=10000, start_x=(10, 10, 10), s=10, b=2.667, r=28
     # Step through "time", calculating the partial derivatives at the current point
     # and using them to estimate the next point
     for i in range(n_steps):
-        x_dot, y_dot, z_dot = lorenz_step((xs[i], ys[i], zs[i]))
+        x_dot, y_dot, z_dot = lorenz_step((xs[i], ys[i], zs[i]), s, b, r)
         xs[i + 1] = xs[i] + (x_dot * dt)
         ys[i + 1] = ys[i] + (y_dot * dt)
         zs[i + 1] = zs[i] + (z_dot * dt)
