@@ -248,7 +248,7 @@ def plot_logistic_map_bifurcations(min_r: float = 0., max_r: float = 4.):
     plt.show()
 
 
-def lorenz(start_pt: Tuple[int, int, int], s=10, r=28, b=2.667):
+def lorenz_step(start_pt: Tuple[int, int, int], s=10, b=2.667, r=28):
     """
     :param start_pt: starting point in 3-dimensional space
     :param s, r, b: parameters of the Lorenz attractor (usually indicated with the Greek letters sigma, ro, beta)
@@ -260,3 +260,30 @@ def lorenz(start_pt: Tuple[int, int, int], s=10, r=28, b=2.667):
     y_dot = r * x - y - x * z
     z_dot = x * y - b * z
     return x_dot, y_dot, z_dot
+
+
+def lorenz_traj(dt=.01, n_steps=10000, start_x=(10, 10, 10), s=10, b=2.667, r=28):
+    # Need one more slot for the initial values
+    xs = np.empty(n_steps + 1)
+    ys = np.empty(n_steps + 1)
+    zs = np.empty(n_steps + 1)
+
+    # Set starting point
+    xs[0], ys[0], zs[0] = start_x[0], start_x[1], start_x[2]
+
+    # Step through "time", calculating the partial derivatives at the current point
+    # and using them to estimate the next point
+    for i in range(n_steps):
+        x_dot, y_dot, z_dot = lorenz_step((xs[i], ys[i], zs[i]))
+        xs[i + 1] = xs[i] + (x_dot * dt)
+        ys[i + 1] = ys[i] + (y_dot * dt)
+        zs[i + 1] = zs[i] + (z_dot * dt)
+
+    # plot
+    ax = plt.figure(figsize=(8, 8)).add_subplot(projection='3d')
+    ax.plot(xs, ys, zs, lw=0.5)
+    ax.set_xlabel("X Axis")
+    ax.set_ylabel("Y Axis")
+    ax.set_zlabel("Z Axis")
+    ax.set_title("Lorenz Attractor")
+    plt.show()
