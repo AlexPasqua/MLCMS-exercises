@@ -262,18 +262,21 @@ def lorenz_step(start_pt: Tuple[int, int, int], s=10, b=2.667, r=28):
     return x_dot, y_dot, z_dot
 
 
-def lorenz_traj(dt=.01, n_steps=10000, start_x=(10, 10, 10), s=10, b=2.667, r=28, plot=True):
+def lorenz_traj(dt=.02, tot_sim_time=1000, start_x=(10, 10, 10), s=10, b=2.667, r=28, plot=True):
+    # simulation steps necessary given the total time and the width of the time step (dt)
+    steps = int(tot_sim_time // dt)
+
     # Need one more slot for the initial values
-    xs = np.empty(n_steps + 1)
-    ys = np.empty(n_steps + 1)
-    zs = np.empty(n_steps + 1)
+    xs = np.empty(steps + 1)
+    ys = np.empty(steps + 1)
+    zs = np.empty(steps + 1)
 
     # Set starting point
     xs[0], ys[0], zs[0] = start_x[0], start_x[1], start_x[2]
 
     # Step through "time", calculating the partial derivatives at the current point
     # and using them to estimate the next point
-    for i in range(n_steps):
+    for i in range(steps):
         x_dot, y_dot, z_dot = lorenz_step((xs[i], ys[i], zs[i]), s, b, r)
         xs[i + 1] = xs[i] + (x_dot * dt)
         ys[i + 1] = ys[i] + (y_dot * dt)
@@ -294,4 +297,4 @@ def lorenz_traj(dt=.01, n_steps=10000, start_x=(10, 10, 10), s=10, b=2.667, r=28
 
 
 if __name__ == '__main__':
-    print(lorenz_traj().shape)
+    lorenz_traj()
