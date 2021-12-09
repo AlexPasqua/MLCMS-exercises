@@ -208,7 +208,7 @@ def plot_SIR_trajectories(t_0, b, mu0, mu1, beta, A, d, nu, rtol=1e-8, atol=1e-8
     # work on second point
     SIM0 = [195.7, 0.03, 3.92]  
     sol = solve_ivp(model, t_span=[time[0], time[-1]], y0=SIM0, t_eval=time, args=(mu0, mu1, beta, A, d, nu, b), method='DOP853', rtol=rtol, atol=atol)
-    plot_SIR_trajectories_actuator(sol, ax, s, colors[1], colors_markers[2], two_dim)
+    plot_SIR_trajectories_actuator(sol, ax, s, colors[1], colors_markers[1], two_dim)
 
     # work on third point
     SIM0 = [193, 0.08, 6.21]  
