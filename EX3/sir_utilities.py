@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.integrate import solve_ivp
 
 
 def mu(b, I, mu0, mu1):
@@ -61,10 +62,17 @@ def model(t, y, mu0, mu1, beta, A, d, nu, b):
     return [dSdt, dIdt, dRdt]
 
 
-def plot_SIR_graphs(sol, b, mu0, mu1, beta, A, d, nu):
+def plot_SIR_variables(sol, b, mu0, mu1, beta, A, d, nu):
     """
-    this functo
-    @return:
+    Create the plots that show the evolution of the S, I, R variables in the SIR model
+    :param sol: solution of the system obtained with scipy.integrate.solve_ivp
+    :param b: number of beds per 10000 persons in the SIR model
+    :param mu0: minimum recovery rate in the SIR model
+    :param mu1: maximum recovery rate in the SIR model
+    :param beta: average number of adequate contacts per unit time with infectious individuals in the SIR model
+    :param A: birth rate in the SIR model
+    :param d: per capita natural deaths in the SIR model
+    :param nu: per capita disease-induced death rate in the SIR model
     """
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
     ax[0].plot(sol.t, sol.y[0] - 0 * sol.y[0][0], label='1E0*susceptible')
@@ -89,5 +97,36 @@ def plot_SIR_graphs(sol, b, mu0, mu1, beta, A, d, nu):
     ax[2].set_title("Indicator function h(I)")
     ax[2].set_xlabel("I")
     ax[2].set_ylabel("h(I)")
+    fig.tight_layout()
 
+
+def plot_SIR_trajectories(t_0, b, mu0, mu1, beta, A, d, nu, rtol=1e-8, atol=1e-8):
+    fig = plt.figure(figsize=(20, 20))
+    ax = fig.add_subplot(111, projection="3d")
+    NT = 100000
+    time = np.linspace(t_0, 150000, NT)
+
+    cmap = ["YlGn", "copper", "bwr"]
+
+    # what happens with this initial condition when b=0.022? -- it progresses VERY slowly. Needs t_end to be super large.
+    SIM0 = [195.3, 0.052, 4.4]
+    sol = solve_ivp(model, t_span=[time[0], time[-1]], y0=SIM0, t_eval=time, args=(mu0, mu1, beta, A, d, nu, b), method='DOP853', rtol=rtol, atol=atol)
+    ax.plot(sol.y[0], sol.y[1], sol.y[2], 'r-')
+    ax.scatter(sol.y[0], sol.y[1], sol.y[2], s=1, c=time, cmap=cmap[0])
+
+    SIM0 = [195.7, 0.03, 3.92]  # what happens with this initial condition when b=0.022?
+    sol = solve_ivp(model, t_span=[time[0], time[-1]], y0=SIM0, t_eval=time, args=(mu0, mu1, beta, A, d, nu, b), method='DOP853', rtol=rtol, atol=atol)
+    ax.plot(sol.y[0], sol.y[1], sol.y[2], 'b-')
+    ax.scatter(sol.y[0], sol.y[1], sol.y[2], s=1, c=time, cmap=cmap[1])
+
+    SIM0 = [193, 0.08, 6.21]  # what happens with this initial condition when b=0.022?
+    sol = solve_ivp(model, t_span=[time[0], time[-1]], y0=SIM0, t_eval=time, args=(mu0, mu1, beta, A, d, nu, b), method='DOP853', rtol=rtol, atol=atol)
+    ax.plot(sol.y[0], sol.y[1], sol.y[2], 'g-')
+    ax.scatter(sol.y[0], sol.y[1], sol.y[2], s=1, c=time, cmap=cmap[2])
+
+    ax.set_xlabel("S")
+    ax.set_ylabel("I")
+    ax.set_zlabel("R")
+
+    ax.set_title(f"SIR trajectory (unfinished) b: {b}")
     fig.tight_layout()
