@@ -52,7 +52,6 @@ def create_bifurcation_diagram_1D(f_to_solve: str, min_alpha=-2, max_alpha=2.1, 
             else:
                 fixed_points[i].append(single_sol)
                 fixed_points_rel_alphas[i].append(alpha)
-
     # postprocessing
     for i in sorted(fixed_points.keys()):
         for j in range(len(fixed_points[i])):
@@ -61,6 +60,7 @@ def create_bifurcation_diagram_1D(f_to_solve: str, min_alpha=-2, max_alpha=2.1, 
                 fixed_points[i][j] = None
         plt.scatter(fixed_points_rel_alphas[i], fixed_points[i])
     plt.xlim(alphas[0], alphas[-1])
+    plt.title(f_to_solve)
     plt.show()
 
 
