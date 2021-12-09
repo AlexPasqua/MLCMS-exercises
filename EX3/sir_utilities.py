@@ -61,10 +61,17 @@ def model(t, y, mu0, mu1, beta, A, d, nu, b):
     return [dSdt, dIdt, dRdt]
 
 
-def plot_SIR_graphs(sol, b, mu0, mu1, beta, A, d, nu):
+def plot_SIR(sol, b, mu0, mu1, beta, A, d, nu):
     """
-    this functo
-    @return:
+    Create the plots that show the evolution of the S, I, R variables in the SIR model
+    :param sol: solution of the system obtained with scipy.integrate.solve_ivp
+    :param b: number of beds per 10000 persons in the SIR model
+    :param mu0: minimum recovery rate in the SIR model
+    :param mu1: maximum recovery rate in the SIR model
+    :param beta: average number of adequate contacts per unit time with infectious individuals in the SIR model
+    :param A: birth rate in the SIR model
+    :param d: per capita natural deaths in the SIR model
+    :param nu: per capita disease-induced death rate in the SIR model
     """
     fig, ax = plt.subplots(1, 3, figsize=(15, 5))
     ax[0].plot(sol.t, sol.y[0] - 0 * sol.y[0][0], label='1E0*susceptible')
