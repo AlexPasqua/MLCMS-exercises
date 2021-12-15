@@ -54,7 +54,13 @@ def svd(data: Union[np.ndarray, pd.DataFrame], center=False):
         np.diag(singular_values),
         np.zeros(shape=(data.shape[0] - len(singular_values), len(singular_values)))
     ))
-    return U, S, Vt
+    return U, S, Vt.T
+
+
+def get_lines_along_principal_directions(pt1: np.ndarray, pt2: np.ndarray):
+    m = (pt2[1] - pt1[1]) / (pt2[0] - pt1[0])
+    q = pt1[1] - m * pt1[0]
+    return m, q
 
 
 if __name__ == '__main__':
