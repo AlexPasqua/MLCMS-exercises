@@ -1,5 +1,4 @@
-from turtle import color
-
+from typing import Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -69,6 +68,11 @@ def get_lines_along_principal_directions(pt1: np.ndarray, pt2: np.ndarray):
 
 
 def load_racoon(display=False):
+    """
+    Loads the image of the racoon
+    :param display: if True, displays the image, otherwise simply returns it
+    :returns: the image (np.ndarray)
+    """
     img = scipy.misc.face(gray=True)
     img = cv2.resize(img, dsize=(249, 185))  # rescale image
     if display:
@@ -77,12 +81,35 @@ def load_racoon(display=False):
     return img
 
 
-def show_2_images_grayscale(img1, img2, vmin=0, vmax=255, titles=("", "")):
+def show_2_images_grayscale(img1: np.ndarray, img2: np.ndarray, vmin=0, vmax=255, titles: Tuple[str, str] = ("", "")):
+    """
+    Utility function to show to images, in grayscale, one next to the other
+    :param img1: first image
+    :param img2: second image
+    :param vmin: minimum intensity value of the images in grayscale
+    :param vmax: maximum intensity value of the images in grayscale
+    :param titles: tuple containing the titles of the 2 images
+    """
     fig, ax = plt.subplots(1, 2, figsize=(10, 15))
     ax[0].imshow(img1, cmap='gray', vmin=vmin, vmax=vmax)
     ax[0].set_title(titles[0])
     ax[1].imshow(img2, cmap='gray', vmin=vmin, vmax=vmax)
     ax[1].set_title(titles[1])
+    plt.show()
+
+
+def plot_2_trajectories(traj1: np.ndarray, traj2: np.ndarray):
+    """
+    Plots the trajectories of 2 pedestrians in a 2D space
+    :param traj1: np.ndarray containing the 1st trajectory -> rows are time steps and columns are x and y position
+    :param traj2: np.ndarray containing the 2nd trajectory -> rows are time steps and columns are x and y position
+    """
+    plt.plot(traj1[:, 0], traj1[:, 1], label="Pedestrian 1", color='tab:blue')
+    plt.plot(traj2[:, 0], traj2[:, 1], label="Pedestrian 2", color='tab:orange')
+    plt.legend()
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.title("Trajectories of 2 pedestrians")
     plt.show()
 
 
