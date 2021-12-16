@@ -6,3 +6,4 @@ plotly~=5.4.0
 scikit-learn~=1.0.1
 matplotlib~=3.5.0
 sympy~=1.9
+opencv-python

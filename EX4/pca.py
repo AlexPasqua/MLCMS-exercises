@@ -1,5 +1,10 @@
+from turtle import color
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scipy.misc
+import cv2
 from typing import Union
 
 
@@ -30,7 +35,7 @@ def read_and_center_data(path="data/pca_dataset.txt"):
     data = read_data(path)
     centered_data = center_data(data)
     return centered_data
-                                               
+
 
 def svd(data: Union[np.ndarray, pd.DataFrame], center=False):
     """
@@ -48,7 +53,7 @@ def svd(data: Union[np.ndarray, pd.DataFrame], center=False):
         data = center_data(data)
 
     # decompose the data through SVD decomposition
-    U, singular_values, Vt = np.linalg.svd(data)    # note that V is already transpose
+    U, singular_values, Vt = np.linalg.svd(data)  # note that V is already transpose
     # starting from a vector containing the singular values, create the S matrix
     S = np.vstack((
         np.diag(singular_values),
@@ -63,5 +68,23 @@ def get_lines_along_principal_directions(pt1: np.ndarray, pt2: np.ndarray):
     return m, q
 
 
+def load_racoon(display=False):
+    img = scipy.misc.face(gray=True)
+    img = cv2.resize(img, dsize=(249, 185))  # rescale image
+    if display:
+        plt.imshow(img, cmap='gray', vmin=0, vmax=255)
+        plt.show()
+    return img
+
+
+def show_2_images_grayscale(img1, img2, vmin=0, vmax=255, titles=("", "")):
+    fig, ax = plt.subplots(1, 2, figsize=(10, 15))
+    ax[0].imshow(img1, cmap='gray', vmin=vmin, vmax=vmax)
+    ax[0].set_title(titles[0])
+    ax[1].imshow(img2, cmap='gray', vmin=vmin, vmax=vmax)
+    ax[1].set_title(titles[1])
+    plt.show()
+
+
 if __name__ == '__main__':
-    pass
+    load_racoon(True)
