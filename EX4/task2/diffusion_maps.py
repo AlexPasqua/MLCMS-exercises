@@ -10,10 +10,6 @@ class DiffusionMap:
 
     def execute_algorithm(self, data, L = 6, eps=None):
         # form a distance matrix
-        # self.D = np.zeros((data.shape[0], data.shape[0]))
-        # for i in range(self.D.shape[0]):
-        #     for j in range(self.D.shape[0]):
-        #         self.D[i][j] = np.linalg.norm(data[i]-data[j])
         self.D = euclidean_distances(data, data)
         print(self.D.shape)
 
