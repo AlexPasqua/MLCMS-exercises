@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-from sklearn.datasets import make_swiss_roll
+from sklearn.datasets import make_swiss_roll, make_s_curve
+from sklearn.metrics.pairwise import euclidean_distances
 
 class DiffusionMap:
     def __init__(self):
@@ -9,10 +10,12 @@ class DiffusionMap:
 
     def execute_algorithm(self, data, L = 6, eps=None):
         # form a distance matrix
-        self.D = np.zeros((data.shape[0], data.shape[0]))
-        for i in range(self.D.shape[0]):
-            for j in range(self.D.shape[0]):
-                self.D[i][j] = np.linalg.norm(data[i]-data[j])
+        # self.D = np.zeros((data.shape[0], data.shape[0]))
+        # for i in range(self.D.shape[0]):
+        #     for j in range(self.D.shape[0]):
+        #         self.D[i][j] = np.linalg.norm(data[i]-data[j])
+        self.D = euclidean_distances(data, data)
+        print(self.D.shape)
 
         # set \eps to 5% of the diameter of the dataset if the parameter is not given
         if eps is None:
@@ -39,8 +42,8 @@ class DiffusionMap:
 
         # find the L + 1 largest eigenvalues and  associated eigenvectors
         self.eigenvalues, self.eigenvectors = np.linalg.eigh(self.T)
-        self.a_l = self.eigenvalues[-L:]
-        self.v_l = self.eigenvectors[:, -L:]
+        self.a_l = self.eigenvalues[-L-1:][::-1]
+        self.v_l = self.eigenvectors[:, -L-1:][:, ::-1]
 
         # compute the eigenvectors phi_l
         self.phi_l = self.Q_inv_sqrt @ self.v_l
@@ -128,10 +131,44 @@ if __name__ == '__main__':
         plt.show()
 
         dm = DiffusionMap()
-        phi_l, eps = dm.execute_algorithm(x)
+        phi_l, eps = dm.execute_algorithm(x, L=10)
         print("algorithm executed")
         for i in range(phi_l.shape[1]):
-            dm.plot_2D_diffusion_maps_task_two(phi_l[:, 0], phi_l[:, i], i, t, eps)
+            dm.plot_2D_diffusion_maps_task_two(phi_l[:, 1], phi_l[:, i], i, t, eps)
         input()
 
+    # trying s-curve
+    if task == 3:
+        print("doing task s")
+        nr_samples = 5000
+
+        # reduce number of points for plotting
+        nr_samples_plot = 1000
+        idx_plot = np.random.permutation(nr_samples)[0:nr_samples_plot]
+
+        # generate point cloud
+        X, X_color = make_s_curve(nr_samples, random_state=3, noise=0)
+
+        # plot
+        fig = plt.figure(figsize=(10, 10))
+        ax = fig.add_subplot(111, projection="3d")
+        ax.scatter(
+            X[idx_plot, 0],
+            X[idx_plot, 1],
+            X[idx_plot, 2],
+            c=X_color[idx_plot],
+            cmap=plt.cm.Spectral,
+        )
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_zlabel("z")
+        ax.set_title("point cloud on S-shaped manifold")
+        ax.view_init(10, 70)
+        fig.show()
+
+        dm = DiffusionMap()
+        phi_l, eps = dm.execute_algorithm(X, L=10)
+        print("algorithm executed")
+        for i in range(phi_l.shape[1]):
+            dm.plot_2D_diffusion_maps_task_two(phi_l[:, 1], phi_l[:, i], i, X_color, eps)
 
