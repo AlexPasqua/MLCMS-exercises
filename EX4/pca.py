@@ -61,10 +61,25 @@ def svd(data: Union[np.ndarray, pd.DataFrame], center=False):
     return U, S, Vt.T
 
 
-def get_lines_along_principal_directions(pt1: np.ndarray, pt2: np.ndarray):
-    m = (pt2[1] - pt1[1]) / (pt2[0] - pt1[0])
-    q = pt1[1] - m * pt1[0]
-    return m, q
+def plot_principal_directions(data: np.ndarray, V: np.ndarray):
+    """
+    Displays a 2D scatter plot of the data and adds the directions of the 2 principal components
+    :param data: data to be plotted
+    :param V: V matrix coming from a SVD decomposition of data, its columns contain the directions of the principal components
+    """
+    plt.scatter(data[:, 0], data[:, 1], label='Centered data')
+    origin = np.mean(data, axis=0)
+    x_values = [origin[0], V[:, 0][0]]
+    y_values = [origin[1], V[:, 0][1]]
+    plt.plot(x_values, y_values, color='r')
+    x_values = [origin[0], V[:, 1][0]]
+    y_values = [origin[1], V[:, 1][1]]
+    plt.plot(x_values, y_values, color='r')
+    plt.xlabel("x")
+    plt.ylabel("f(x)")
+    plt.title("Scatter plot of the data")
+    plt.legend()
+    plt.show()
 
 
 def load_racoon(display=False):
