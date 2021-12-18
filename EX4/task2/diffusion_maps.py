@@ -45,7 +45,7 @@ class DiffusionMap:
         self.phi_l = self.Q_inv_sqrt @ self.v_l
         return self.phi_l, self.eps
 
-    def plot_2D_diffusion_maps_task_one(self, d_map, d_map_idx, time, eps):
+    def plot_2D_diffusion_maps_task_one(self, d_map, d_map_idx, time, eps, lim=None):
         """
         plot 2D result of dimension reduction, eigenfunction with respect to time
         :param d_map: eigenfunction to plot
@@ -58,9 +58,11 @@ class DiffusionMap:
         ax = fig.add_subplot()
         ax.scatter(x=d_map, y=time, c=time)
         ax.set_title(f"eigenfunct {d_map_idx} with eps={round(eps,5)}")
+        if lim is not None:
+            ax.set_ylim([-lim, lim])
         fig.show()
 
-    def plot_2D_diffusion_maps_task_two(self, d_map_zero, d_map, d_map_idx, time, eps):
+    def plot_2D_diffusion_maps_task_two(self, d_map_zero, d_map, d_map_idx, time, eps, lim=None):
         """
         plot 2D result of dimension reduction, eigenfunction with respect to time
         :param d_map_zero: eigenfunction constant to plot
@@ -74,6 +76,24 @@ class DiffusionMap:
         ax = fig.add_subplot()
         ax.scatter(x=d_map_zero, y=d_map, c=time)
         ax.set_title(f"eigenfunct {d_map_idx} with eps={round(eps,5)}")
+        if lim is not None:
+            ax.set_ylim([-lim, lim])
+        fig.show()
+
+    def plot_3D_diffusion_maps_task_three(self, d_map_zero, d_map_one, d_map_two, d_map_zero_idx, d_map_one_idx, d_map_two_idx, time, eps):
+        """
+        plot 2D result of dimension reduction, eigenfunction with respect to time
+        :param d_map_zero: eigenfunction constant to plot
+        :param d_map: eigenfunction to plot
+        :param d_map_idx: eigenfunction index for plot title
+        :param time: time array to plot eigenfunction against
+        :param eps: decided eps for created eigenfunction
+        :return:
+        """
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='3d')
+        ax.scatter(d_map_zero, d_map_one, d_map_two, c=time)
+        ax.set_title(f"x=phi_{d_map_zero_idx}, y=phi_{d_map_one_idx}, z=phi_{d_map_two_idx} with eps={round(eps,5)}")
         fig.show()
 
 
