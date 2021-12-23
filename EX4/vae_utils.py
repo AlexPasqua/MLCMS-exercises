@@ -56,8 +56,8 @@ def fit(model, dataloader, optimizer, train_data, labelled=True, use_BCE=True):
     """
     model.train()  # set in train mode
     running_loss, running_kld_loss, running_rec_loss = 0.0, 0.0, 0.0  # set up losses to accumulate over
-    criterion = nn.BCELoss(reduction='sum') if use_BCE else nn.MSELoss(reduction='sum') # set up criterion for loss
-    for i, data in tqdm(enumerate(dataloader), total=int(len(train_data)/dataloader.batch_size)):
+    criterion = nn.BCELoss(reduction='sum') if use_BCE else nn.MSELoss(reduction='sum')  # set up criterion for loss
+    for i, data in tqdm(enumerate(dataloader), total=int(len(train_data) / dataloader.batch_size)):
         data = data[0] if labelled else data  # get the train batch
         data = data.view(data.size(0), -1)  # unroll
         data = data.float()
@@ -71,10 +71,10 @@ def fit(model, dataloader, optimizer, train_data, labelled=True, use_BCE=True):
         running_loss += loss[2].item()
         loss[2].backward()  # set up gradient with total loss
         optimizer.step()  # backprop
-    train_loss = []  # set up return variable for all three losses
-    train_loss.append(running_kld_loss/len(dataloader.dataset))
-    train_loss.append(running_rec_loss/len(dataloader.dataset))
-    train_loss.append(running_loss/len(dataloader.dataset))
+    # set up return variable for all three losses
+    train_loss = [running_kld_loss / len(dataloader.dataset),
+                  running_rec_loss / len(dataloader.dataset),
+                  running_loss / len(dataloader.dataset)]
     return train_loss
 
 
@@ -126,10 +126,10 @@ def test(model, dataloader, test_data, labelled=None, epoch=None, save=False, pl
                         plt.clf()
                     else:
                         plt.show()
-    test_loss = []  # set up return variable for all three losses
-    test_loss.append(running_kld_loss / len(dataloader.dataset))
-    test_loss.append(running_rec_loss / len(dataloader.dataset))
-    test_loss.append(running_loss / len(dataloader.dataset))
+    # set up return variable for all three losses
+    test_loss = [running_kld_loss / len(dataloader.dataset),
+                 running_rec_loss / len(dataloader.dataset),
+                 running_loss / len(dataloader.dataset)]
     return test_loss
 
 
@@ -145,7 +145,7 @@ def fit_alternative(model, dataloader, optimizer, train_data, labelled=True):
     """
     model.train()  # set in train mode
     running_loss, running_kld_loss, running_rec_loss = 0.0, 0.0, 0.0  # set up losses to accumulate over
-    for i, data in tqdm(enumerate(dataloader), total=int(len(train_data)/dataloader.batch_size)):
+    for i, data in tqdm(enumerate(dataloader), total=int(len(train_data) / dataloader.batch_size)):
         data = data[0] if labelled else data  # get the train batch
         data = data.view(data.size(0), -1)  # unroll
         optimizer.zero_grad()  # set gradient to zero
@@ -157,10 +157,10 @@ def fit_alternative(model, dataloader, optimizer, train_data, labelled=True):
         running_loss += loss[2].item()
         loss[2].backward()  # set up gradient with total loss
         optimizer.step()  # backprop
-    train_loss = []  # set up return variable for all three losses
-    train_loss.append(running_kld_loss/len(dataloader.dataset))
-    train_loss.append(running_rec_loss/len(dataloader.dataset))
-    train_loss.append(running_loss/len(dataloader.dataset))
+    # set up return variable for all three losses
+    train_loss = [running_kld_loss / len(dataloader.dataset),
+                  running_rec_loss / len(dataloader.dataset),
+                  running_loss / len(dataloader.dataset)]
     return train_loss
 
 
@@ -209,10 +209,10 @@ def test_alternative(model, dataloader, test_data, labelled=None, epoch=None, sa
                         plt.clf()
                     else:
                         plt.show()
-    test_loss = []  # set up return variable for all three losses
-    test_loss.append(running_kld_loss / len(dataloader.dataset))
-    test_loss.append(running_rec_loss / len(dataloader.dataset))
-    test_loss.append(running_loss / len(dataloader.dataset))
+    # set up return variable for all three losses
+    test_loss = [running_kld_loss / len(dataloader.dataset),
+                 running_rec_loss / len(dataloader.dataset),
+                 running_loss / len(dataloader.dataset)]
     return test_loss
 
 
@@ -231,13 +231,13 @@ def plot_reconstructed_digits(model, epoch=None, r0=(-8, 8), r1=(-8, 8), n=30, s
     if model.latent_dim != 2:
         return
     w = 28  # we know the dimensionality row, column
-    img = np.zeros((n*w, n*w))
+    img = np.zeros((n * w, n * w))
     for i, y in enumerate(np.linspace(*r1, n)):
         for j, x in enumerate(np.linspace(*r0, n)):
             z = torch.Tensor([[x, y]])  # defined the "sampled" value
             x_hat = model.decode(z)  # decode the sample
             x_hat = x_hat.reshape(28, 28).detach().numpy()
-            img[(n-1-i)*w:(n-1-i+1)*w, j*w:(j+1)*w] = x_hat  # put it in the image
+            img[(n - 1 - i) * w:(n - 1 - i + 1) * w, j * w:(j + 1) * w] = x_hat  # put it in the image
     # save the image if requested, otherwise plot it
     if save:
         save_image(torch.Tensor(img), f"outputs/latent_space_digits/latent_space{epoch}.png")
@@ -247,7 +247,7 @@ def plot_reconstructed_digits(model, epoch=None, r0=(-8, 8), r1=(-8, 8), n=30, s
         plt.show()
 
 
-def plot_loss(train_loss=None, test_loss=None, epochs=None, figsize=(10,10)):
+def plot_loss(train_loss=None, test_loss=None, epochs=None, figsize=(10, 10)):
     """
     Plot the 3 losses (KLD, REC_LOSS, REC_LOSS + KLD) for possibly train and test data
     :param train_loss: array where elements are [KLD, REC_LOSS, REC_LOSS + KLD]
@@ -289,7 +289,6 @@ def save_reconstructed(data, mu_rec, epoch, batch_size):
     :param mu_rec: output data batch
     :param epoch: needed for save file name
     :param batch_size: batch size of given data and mu_rec
-    :return:
     """
     # save the last batch input and output of every epoch
     num_rows = 15
@@ -303,16 +302,16 @@ def get_MI_reconstruction(model, dataloader, dataset):
     :param model: model to use as feedforward
     :param dataloader: useful to iter through data
     :param dataset: data to use
-    :return:
     """
     model.eval()
     reconstruction = []
-    for i, data in tqdm(enumerate(dataloader), total=int(len(dataset)/dataloader.batch_size)):
+    for i, data in tqdm(enumerate(dataloader), total=int(len(dataset) / dataloader.batch_size)):
         data = data.view(data.size(0), -1)
         data = data.float()
         mu_rec, mu_latent, logvar_latent = model(data)
         reconstruction.append(mu_rec.detach())
     return reconstruction
+
 
 def check_number_in_box(data, rect_diag_0, rect_diag_1, counter=0):
     """

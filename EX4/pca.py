@@ -126,7 +126,3 @@ def plot_2_trajectories(traj1: np.ndarray, traj2: np.ndarray):
     plt.ylabel("y")
     plt.title("Trajectories of 2 pedestrians")
     plt.show()
-
-
-if __name__ == '__main__':
-    load_racoon(True)

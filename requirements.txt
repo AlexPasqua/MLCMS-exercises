@@ -1,9 +1,9 @@
-numpy~=1.21.3
-pandas~=1.3.4
-dash~=2.0.0
-scipy~=1.7.2
-plotly~=5.4.0
-scikit-learn~=1.0.1
-matplotlib~=3.5.0
-sympy~=1.9
+numpy
+pandas
+dash
+scipy
+plotly
+scikit-learn
+matplotlib
+sympy
 opencv-python

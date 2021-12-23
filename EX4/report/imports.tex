@@ -1,0 +1,91 @@
+%%
+% imports for the exercise sheets
+%
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\usepackage[yyyymmdd]{datetime}
+\renewcommand{\dateseparator}{--}
+
+\usepackage[left=2cm,right=2cm,top=3cm,bottom=3cm]{geometry}
+
+\usepackage{hyperref}
+
+\usepackage{amsthm}
+\newtheorem{lem}{Lemma}
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem{rem}{Remark}
+\newtheorem{definition}{Definition}
+\newtheorem{ter}{Terminology}
+
+\usepackage{graphicx}
+
+\newcommand{\M}{\mathcal{M}}
+\newcommand{\N}{\mathcal{N}}
+\newcommand{\K}{\mathcal{K}}
+\newcommand{\SPDk}{\mathbb{P}^k}
+\newcommand{\vol}{\text{vol}}
+
+\newcommand{\Figref}[1]{Figure~\ref{#1}}
+\newcommand{\figref}[1]{figure~\ref{#1}}
+\newcommand{\Eqnref}[1]{Equation~(\eqref{#1})}
+\newcommand{\eqnref}[1]{equation~(\eqref{#1})}
+
+\usepackage{float}
+\usepackage{tabularx}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\usepackage{totcount}
+\newtotcounter{taskCounter}
+\newtotcounter{pointCounter}
+\newenvironment{task}[1]{\noindent\stepcounter{taskCounter}\textbf{Report on task #1}\smallbreak\hrule\smallbreak}{\smallbreak\hrule\bigbreak}
+
+
+\title{Report for exercise \exerciseNumber~from group~\groupNumber}
+
+\makeatletter
+\let\thetitle\@title
+\let\theauthor\@author
+\let\thedate\@date
+\makeatother
+
+\providecommand{\versiondate}{\today}
+
+\lhead{Exercise sheet \exerciseNumber}
+\chead{Master Praktikum: Modelling and Simulation of Crowds WS2019/20}
+\rhead{TUM}
+\lfoot{Report of Group \groupNumber}
+\cfoot{\thepage}
+\rfoot{Last compiled: \versiondate}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\newcommand{\frontpage}{
+\begin{center}
+\textbf{\thetitle}\\~\\
+\end{center}
+\begin{table}[H]
+\begin{tabular}{ll}
+Tasks addressed:&\total{taskCounter}\\
+Authors:&\authorA\\
+&\authorB\\
+&\authorC\\
+Last compiled:&\versiondate\\
+Source code:&\sourceCodeLink
+\end{tabular}
+\end{table}
+\vfill
+The work on tasks was divided in the following way:
+\begin{table}[H]
+\begin{tabularx}{\textwidth}{X|p{2cm}|p{2cm}}
+\workPerAuthor
+\end{tabularx}
+\end{table}
+\newpage
+}

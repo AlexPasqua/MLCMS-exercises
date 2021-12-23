@@ -36,7 +36,8 @@ class VAE(nn.Module):
         # set up the reconstruction logvar for the output distribution as a globally trainable parameter
         self.log_var_rec = nn.Parameter(torch.tensor(1.))  # by default requires_grad = True
 
-    def reparameterize(self, mu, log_var):
+    @staticmethod
+    def reparameterize(mu, log_var):
         """
         applies the reparameterization trick to allow backprop to flow to encoder part of the model
         :param mu: mean from the encoder's latent space
@@ -49,11 +50,11 @@ class VAE(nn.Module):
 
     def forward(self, x):
         """
-            feedforward
-            :param x: input data
-            :return: mean of reconstructed data,
-            mean of latent space,
-            log_var of latent space
+        feed forward
+        :param x: input data
+        :return: mean of reconstructed data,
+        mean of latent space,
+        log_var of latent space
         """
         mu_latent, log_var_latent = self.encode(x)
         # get the latent vector through reparameterization
