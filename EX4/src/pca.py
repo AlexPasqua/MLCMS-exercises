@@ -7,7 +7,7 @@ import cv2
 from typing import Union
 
 
-def read_data(path="data/pca_dataset.txt"):
+def read_data(path="../data/pca_dataset.txt"):
     """
     Read the data for the PCA task
     :param path: path to the dataset file
@@ -25,7 +25,7 @@ def center_data(data: Union[np.ndarray, pd.DataFrame]):
     return data - np.mean(data, axis=0)
 
 
-def read_and_center_data(path="data/pca_dataset.txt"):
+def read_and_center_data(path="../data/pca_dataset.txt"):
     """
     Read the data for the PCA task and centers it by removing the mean
     :param path: path to the dataset file
