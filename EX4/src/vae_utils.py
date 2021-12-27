@@ -122,7 +122,7 @@ def test(model, dataloader, test_data, labelled=None, epoch=None, save=False, pl
                     plt.grid(False)
                     # save instead of plotting if requested
                     if save:
-                        plt.savefig(f"outputs/latent_space/latent_space{epoch}.png")
+                        plt.savefig(f"../outputs/latent_space/latent_space{epoch}.png")
                         plt.clf()
                     else:
                         plt.show()
@@ -205,7 +205,7 @@ def test_alternative(model, dataloader, test_data, labelled=None, epoch=None, sa
                     plt.grid(False)
                     # save instead of plotting if requested
                     if save:
-                        plt.savefig(f"outputs/latent_space/latent_space{epoch}.png")
+                        plt.savefig(f"../outputs/latent_space/latent_space{epoch}.png")
                         plt.clf()
                     else:
                         plt.show()
@@ -240,7 +240,7 @@ def plot_reconstructed_digits(model, epoch=None, r0=(-8, 8), r1=(-8, 8), n=30, s
             img[(n - 1 - i) * w:(n - 1 - i + 1) * w, j * w:(j + 1) * w] = x_hat  # put it in the image
     # save the image if requested, otherwise plot it
     if save:
-        save_image(torch.Tensor(img), f"outputs/latent_space_digits/latent_space{epoch}.png")
+        save_image(torch.Tensor(img), f"../outputs/latent_space_digits/latent_space{epoch}.png")
     else:
         plt.imshow(img, extent=[*r0, *r1])
         plt.grid(False)
@@ -293,7 +293,7 @@ def save_reconstructed(data, mu_rec, epoch, batch_size):
     # save the last batch input and output of every epoch
     num_rows = 15
     img = torch.cat((data.view(batch_size, 1, 28, 28)[:15], mu_rec.view(batch_size, 1, 28, 28)[:15]))
-    save_image(img, f"outputs/reconstructed_vs_original/output{epoch}.png", nrow=num_rows)
+    save_image(img, f"../outputs/reconstructed_vs_original/output{epoch}.png", nrow=num_rows)
 
 
 def get_MI_reconstruction(model, dataloader, dataset):
