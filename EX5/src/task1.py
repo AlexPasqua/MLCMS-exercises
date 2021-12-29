@@ -1,17 +1,17 @@
 import pandas as pd
 import numpy as np
-from typing import Union, Iterable
+from typing import Union, Iterable, Tuple
 
 
-def approx_lin_func(data: Union[str, Iterable[np.ndarray]]):
+def get_coeffs_and_targets(data: Union[str, Iterable[np.ndarray]]) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Approximate a linear function through least squares
+    Depending on the type of the parameter 'data', returns correctly the coefficients and the targets
     :param data:
         Either str: path to the file containing the data in the format Nx2, col 0 is the data, col 1 the targets.
         Or Iterable containing 2 numpy ndarrays:
             1st: coefficients matrix
             2nd: targets for each point in the coefficients matrix.
-    :returns: tuple (least squares solution, residuals, rank of coefficients matrix, singular values of coefficient matrix)
+    :returns: coefficients and targets
     """
     if isinstance(data, str):
         data_path = data
@@ -24,10 +24,37 @@ def approx_lin_func(data: Union[str, Iterable[np.ndarray]]):
         if len(data) != 2:
             raise ValueError(f"Parameter data must be either a string or an Iterable of 2 numpy ndarrays, got {len(data)} elements")
         coeffs, targets = data[0], data[1]
+    return coeffs, targets
 
+
+def approx_lin_func(data: Union[str, Iterable[np.ndarray]]):
+    """
+    Approximate a linear function through least squares
+    :param data:
+        Either str: path to the file containing the data in the format Nx2, col 0 is the data, col 1 the targets.
+        Or Iterable containing 2 numpy ndarrays:
+            1st: coefficients matrix
+            2nd: targets for each point in the coefficients matrix.
+    :returns: tuple (least squares solution, residuals, rank of coefficients matrix, singular values of coefficient matrix)
+    """
+    # get coefficients and targets from data
+    coeffs, targets = get_coeffs_and_targets(data)
     # solve least square
     sol, residuals, rank, singvals = np.linalg.lstsq(a=coeffs, b=targets, rcond=None)
     return sol, residuals, rank, singvals
+
+
+def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]]):
+    """
+    Approximate a non-linear function through least squares
+    :param data:
+        Either str: path to the file containing the data in the format Nx2, col 0 is the data, col 1 the targets.
+        Or Iterable containing 2 numpy ndarrays:
+            1st: coefficients matrix
+            2nd: targets for each point in the coefficients matrix.
+    :returns: tuple (least squares solution, residuals, rank of coefficients matrix, singular values of coefficient matrix)
+    """
+    coeffs, targets = get_coeffs_and_targets(data)
 
 
 if __name__ == '__main__':
