@@ -27,7 +27,7 @@ def get_coeffs_and_targets(data: Union[str, Iterable[np.ndarray]]) -> Tuple[np.n
     return coeffs, targets
 
 
-def approx_lin_func(data: Union[str, Iterable[np.ndarray]]):
+def approx_lin_func(data: Union[str, Iterable[np.ndarray]] = "../data/linear_function_data.txt") -> Tuple[np.ndarray, np.ndarray, int, np.ndarray]:
     """
     Approximate a linear function through least squares
     :param data:
@@ -44,7 +44,7 @@ def approx_lin_func(data: Union[str, Iterable[np.ndarray]]):
     return sol, residuals, rank, singvals
 
 
-def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]]):
+def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]] = "../data/nonlinear_function_data.txt", n_bases: int = 5, eps: float = 0.1):
     """
     Approximate a non-linear function through least squares
     :param data:
@@ -52,10 +52,34 @@ def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]]):
         Or Iterable containing 2 numpy ndarrays:
             1st: coefficients matrix
             2nd: targets for each point in the coefficients matrix.
+    :param n_bases: the number of basis functions to approximate the nonlinear function
+    :param eps: bandwidth of the basis functions
     :returns: tuple (least squares solution, residuals, rank of coefficients matrix, singular values of coefficient matrix)
     """
+    # get coefficients and targets form the data
     coeffs, targets = get_coeffs_and_targets(data)
+
+    # create n_bases basis functions' center points
+    centers = np.random.choice(coeffs.ravel(), replace=False, size=n_bases)
+
+    # evaluate the basis functions on the whole data and putting each basis' result in an array
+    list_of_bases = np.empty(shape=(len(coeffs), n_bases))
+    for i, center_point in enumerate(centers):
+        # TODO: choose between alternative 1 and 2 in what follows. They are equivalent, it's a matter of aesthetic and "principle"
+
+        # alternative 1
+        subtraction = np.subtract(center_point, coeffs)     # note: center_point is a single point, coeffs are many points -> broadcasting
+        norm = np.linalg.norm(subtraction, axis=1)
+        basis = np.exp(-norm ** 2 / eps ** 2)
+        list_of_bases[:, i] = basis
+
+        # alternative 2
+        list_of_bases[:, i] = np.exp(-np.linalg.norm(center_point - coeffs, axis=1) ** 2 / eps ** 2)
+
+    # solve least square using the basis functions in place of the coefficients to use linear method with nonlinear function
+    sol, residuals, rank, singvals = np.linalg.lstsq(a=list_of_bases, b=targets, rcond=None)
+    return sol, residuals, rank, singvals
 
 
 if __name__ == '__main__':
-    pass
+    approx_nonlin_func()
