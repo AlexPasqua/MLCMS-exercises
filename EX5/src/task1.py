@@ -26,6 +26,26 @@ def get_points_and_targets(data: Union[str, Iterable[np.ndarray]]) -> Tuple[np.n
     return points, targets
 
 
+def compute_bases(points: np.ndarray, eps: float, n_bases: int, centers: np.ndarray = None):
+    """
+    Compute the basis functions
+    :param points: the points on which to calculate the basis functions
+    :param centers: the center points to pick to compute the basis functions
+    :param eps: epsilon param of the basis functions
+    :param n_bases: number of basis functions to compute
+    :returns: list of basis functions evaluated on every point in 'points'
+    """
+    if centers is None:
+        centers = np.random.choice(points.ravel(), replace=False, size=n_bases)
+    list_of_bases = np.empty(shape=(len(points), n_bases))
+    for i, center_point in enumerate(centers):
+        subtraction = np.subtract(center_point, points)  # note: center_point is a single point, points are many points -> broadcasting
+        norm = np.linalg.norm(subtraction, axis=1)
+        basis = np.exp(-norm ** 2 / eps ** 2)
+        list_of_bases[:, i] = basis
+    return list_of_bases
+
+
 def approx_lin_func(data: Union[str, Iterable[np.ndarray]] = "../data/linear_function_data.txt") -> Tuple[np.ndarray, np.ndarray, int, np.ndarray]:
     """
     Approximate a linear function through least squares
@@ -58,12 +78,7 @@ def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]] = "../data/nonline
     centers = np.random.choice(points.ravel(), replace=False, size=n_bases)
 
     # evaluate the basis functions on the whole data and putting each basis' result in an array
-    list_of_bases = np.empty(shape=(len(points), n_bases))
-    for i, center_point in enumerate(centers):
-        subtraction = np.subtract(center_point, points)     # note: center_point is a single point, points are many points -> broadcasting
-        norm = np.linalg.norm(subtraction, axis=1)
-        basis = np.exp(-norm ** 2 / eps ** 2)
-        list_of_bases[:, i] = basis
+    list_of_bases = compute_bases(points=points, centers=centers, eps=eps, n_bases=n_bases)
 
     # solve least square using the basis functions in place of the coefficients to use linear method with nonlinear function
     sol, residuals, rank, singvals = np.linalg.lstsq(a=list_of_bases, b=targets, rcond=None)
@@ -89,12 +104,7 @@ def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.nda
     if linear:
         y = lstsqr_sol * x  # y value for each x, used to plot the approximated data
     else:
-        list_of_bases = np.empty(shape=(len(x), len(centers)))
-        for i, center_point in enumerate(centers):
-            subtraction = np.subtract(center_point, np.expand_dims(x, 1))  # note: center_point is a single point, points are many points -> broadcasting
-            norm = np.linalg.norm(subtraction, axis=1)
-            basis = np.exp(-norm ** 2 / eps ** 2)
-            list_of_bases[:, i] = basis
+        list_of_bases = compute_bases(points=np.expand_dims(x, 1), centers=centers, eps=eps, n_bases=len(centers))
         y = np.sum(lstsqr_sol * list_of_bases, axis=1)  # '*' indicates and elementwise product (dimensions broadcast to common shape)
 
     # plot approximated function over the actual data
