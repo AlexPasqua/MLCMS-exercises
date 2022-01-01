@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from typing import Union, Iterable, Tuple
@@ -65,21 +66,40 @@ def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]] = "../data/nonline
     # evaluate the basis functions on the whole data and putting each basis' result in an array
     list_of_bases = np.empty(shape=(len(coeffs), n_bases))
     for i, center_point in enumerate(centers):
-        # TODO: choose between alternative 1 and 2 in what follows. They are equivalent, it's a matter of aesthetic and "principle"
-
-        # alternative 1
         subtraction = np.subtract(center_point, coeffs)     # note: center_point is a single point, coeffs are many points -> broadcasting
         norm = np.linalg.norm(subtraction, axis=1)
         basis = np.exp(-norm ** 2 / eps ** 2)
         list_of_bases[:, i] = basis
-
-        # alternative 2
-        list_of_bases[:, i] = np.exp(-np.linalg.norm(center_point - coeffs, axis=1) ** 2 / eps ** 2)
 
     # solve least square using the basis functions in place of the coefficients to use linear method with nonlinear function
     sol, residuals, rank, singvals = np.linalg.lstsq(a=list_of_bases, b=targets, rcond=None)
     return sol, residuals, rank, singvals
 
 
+def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.ndarray]]):
+    """
+    Plot the approximated function over the actual data, given the solution of the least squares problem and the data
+    :param lstsqr_sol: solution of the least squares problem
+    :param data:
+        Either str: path to the file containing the data in the format Nx2, col 0 is the data, col 1 the targets.
+        Or Iterable containing 2 numpy ndarrays:
+            1st: coefficients matrix
+            2nd: targets for each point in the coefficients matrix.
+    """
+    x = np.linspace(start=-5, stop=5, num=100)  # x axis
+    y = lstsqr_sol * x  # y value for each x, used to plot the approximated data
+    coeffs, targets = get_coeffs_and_targets(data)  # get the data
+    # plot approximated function over the actual data
+    plt.figure(figsize=(5, 5))
+    plt.scatter(coeffs, targets, label="Data")
+    plt.plot(x, y, color='r', label="Approximated function")
+    plt.legend()
+    plt.title("Approximated function plotted over the actual data")
+    plt.tight_layout()
+    plt.show()
+
+
 if __name__ == '__main__':
-    approx_nonlin_func()
+    data_path = "../data/linear_function_data.txt"
+    A, residuals, rank, singvals = approx_lin_func(data_path)
+    plot_func_over_data(A, data_path)
