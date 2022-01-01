@@ -36,6 +36,7 @@ def compute_bases(points: np.ndarray, eps: float, n_bases: int, centers: np.ndar
     :returns: list of basis functions evaluated on every point in 'points'
     """
     if centers is None:
+        # create n_bases basis functions' center points
         centers = np.random.choice(points.ravel(), replace=False, size=n_bases)
     list_of_bases = np.empty(shape=(len(points), n_bases))
     for i, center_point in enumerate(centers):
@@ -61,7 +62,8 @@ def approx_lin_func(data: Union[str, Iterable[np.ndarray]] = "../data/linear_fun
     return sol, residuals, rank, singvals
 
 
-def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]] = "../data/nonlinear_function_data.txt", n_bases: int = 5, eps: float = 0.1):
+def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]] = "../data/nonlinear_function_data.txt", n_bases: int = 5, eps: float = 0.1,
+                       centers: np.ndarray = None):
     """
     Approximate a non-linear function through least squares
     :param data:
@@ -69,13 +71,11 @@ def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]] = "../data/nonline
         Or Iterable containing 2 numpy ndarrays: points and targets
     :param n_bases: the number of basis functions to approximate the nonlinear function
     :param eps: bandwidth of the basis functions
+    :param centers: list of center points to compute the basis functions
     :returns: tuple (least squares solution, residuals, rank of coefficients matrix, singular values of coefficient matrix)
     """
     # get coefficients and targets form the data
     points, targets = get_points_and_targets(data)
-
-    # create n_bases basis functions' center points
-    centers = np.random.choice(points.ravel(), replace=False, size=n_bases)
 
     # evaluate the basis functions on the whole data and putting each basis' result in an array
     list_of_bases = compute_bases(points=points, centers=centers, eps=eps, n_bases=n_bases)
@@ -96,6 +96,8 @@ def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.nda
     :param centers: (optional) list of center points to compute the basis functions in case linear=False
     :param eps: (optional) epsilon parameter to compute the basis functions in case linear=False
     """
+    plot_title = "Approximated function plotted over the actual data"
+
     # get the data's coefficients and targets
     points, targets = get_points_and_targets(data)
 
@@ -106,13 +108,14 @@ def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.nda
     else:
         list_of_bases = compute_bases(points=np.expand_dims(x, 1), centers=centers, eps=eps, n_bases=len(centers))
         y = np.sum(lstsqr_sol * list_of_bases, axis=1)  # '*' indicates and elementwise product (dimensions broadcast to common shape)
+        plot_title += f"\nn_bases: {len(centers)}, eps: {eps}"
 
     # plot approximated function over the actual data
     plt.figure(figsize=(5, 5))
     plt.scatter(points, targets, label="Data")
     plt.plot(x, y, color='r', label="Approximated function")
     plt.legend()
-    plt.title("Approximated function plotted over the actual data")
+    plt.title(plot_title)
     plt.tight_layout()
     plt.show()
 
