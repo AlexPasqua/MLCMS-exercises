@@ -118,9 +118,3 @@ def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.nda
     plt.title(plot_title)
     plt.tight_layout()
     plt.show()
-
-
-if __name__ == '__main__':
-    data_path = "../data/nonlinear_function_data.txt"
-    C, residuals, rank, singvals, centers, eps = approx_nonlin_func(data=data_path)
-    plot_func_over_data(lstsqr_sol=C, data=data_path, linear=False, centers=centers, eps=eps)
