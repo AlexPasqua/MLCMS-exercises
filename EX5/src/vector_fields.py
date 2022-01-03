@@ -24,8 +24,8 @@ def estimate_vectors(delta_t: float) -> np.ndarray:
     # read the 2 files containing the vector field data
     x0, x1 = read_vectorfield_data()
     # estimate the vector field through the finite-difference formula
-    vector_field = (x1 - x0) / delta_t
-    return vector_field
+    vectors = (x1 - x0) / delta_t
+    return vectors
 
 
 if __name__ == '__main__':
