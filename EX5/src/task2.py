@@ -15,13 +15,18 @@ def read_vectorfield_data(dir_path="../data/", base_filename="linear_vectorfield
     return x0, x1
 
 
-def estimate_vectors():
+def estimate_vectors(delta_t: float) -> np.ndarray:
     """
-
+    Estimates the vector field using the finite-difference formula
+    :param delta_t: the time difference used as denominator of the time-difference formula
+    :returns: an approximation of the vectors s.t. v(x0_k) = x1_k
     """
-    # read the 2 files
-    read_vectorfield_data()
+    # read the 2 files containing the vector field data
+    x0, x1 = read_vectorfield_data()
+    # estimate the vector field through the finite-difference formula
+    vector_field = (x1 - x0) / delta_t
+    return vector_field
 
 
 if __name__ == '__main__':
-    estimate_vectors()
+    vecs = estimate_vectors(delta_t=0.1)
