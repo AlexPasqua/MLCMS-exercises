@@ -82,7 +82,7 @@ def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]] = "../data/nonline
 
     # solve least square using the basis functions in place of the coefficients to use linear method with nonlinear function
     sol, residuals, rank, singvals = np.linalg.lstsq(a=list_of_bases, b=targets, rcond=None)
-    return sol, residuals, rank, singvals, centers, eps
+    return sol, residuals, rank, singvals, centers, eps, list_of_bases
 
 
 def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.ndarray]], linear: bool, centers=None, eps=None):
