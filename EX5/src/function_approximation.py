@@ -58,7 +58,7 @@ def approx_lin_func(data: Union[str, Iterable[np.ndarray]] = "../data/linear_fun
     # get coefficients and targets from data
     points, targets = get_points_and_targets(data)
     # solve least square
-    sol, residuals, rank, singvals = np.linalg.lstsq(a=points, b=targets, rcond=0.01)
+    sol, residuals, rank, singvals = np.linalg.lstsq(a=points, b=targets, rcond=None)
     return sol, residuals, rank, singvals
 
 
