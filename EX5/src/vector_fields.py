@@ -5,8 +5,6 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
 
-
-
 def read_vectorfield_data(dir_path="../data/", base_filename="linear_vectorfield_data") -> Tuple[np.ndarray, np.ndarray]:
     """
     Reads the 2 files containing the vector field data

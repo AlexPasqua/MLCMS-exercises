@@ -283,13 +283,14 @@ def lorenz_traj(dt=.02, tot_sim_time=1000, start_x=(10, 10, 10), s=10, b=2.667, 
         zs[i + 1] = zs[i] + (z_dot * dt)
 
     # plot
-    ax = plt.figure(figsize=(8, 8)).add_subplot(projection='3d')
-    ax.plot(xs, ys, zs, lw=0.5)
-    ax.set_xlabel("X Axis")
-    ax.set_ylabel("Y Axis")
-    ax.set_zlabel("Z Axis")
-    ax.set_title("Lorenz Attractor")
-    plt.show()
+    if plot:
+        ax = plt.figure(figsize=(8, 8)).add_subplot(projection='3d')
+        ax.plot(xs, ys, zs, lw=0.5)
+        ax.set_xlabel("X Axis")
+        ax.set_ylabel("Y Axis")
+        ax.set_zlabel("Z Axis")
+        ax.set_title("Lorenz Attractor")
+        plt.show()
 
     # create list of the 3D points along the trajectory
     traj_pts = [(xs[i], ys[i], zs[i]) for i in range(len(xs))]
