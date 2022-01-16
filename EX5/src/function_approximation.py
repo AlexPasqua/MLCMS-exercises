@@ -58,7 +58,7 @@ def approx_lin_func(data: Union[str, Iterable[np.ndarray]] = "../data/linear_fun
     # get coefficients and targets from data
     points, targets = get_points_and_targets(data)
     # solve least square
-    sol, residuals, rank, singvals = np.linalg.lstsq(a=points, b=targets, rcond=None)
+    sol, residuals, rank, singvals = np.linalg.lstsq(a=points, b=targets, rcond=1e-5)
     return sol, residuals, rank, singvals
 
 
@@ -81,7 +81,7 @@ def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]] = "../data/nonline
     list_of_bases, centers = compute_bases(points=points, centers=centers, eps=eps, n_bases=n_bases)
 
     # solve least square using the basis functions in place of the coefficients to use linear method with nonlinear function
-    sol, residuals, rank, singvals = np.linalg.lstsq(a=list_of_bases, b=targets, rcond=None)
+    sol, residuals, rank, singvals = np.linalg.lstsq(a=list_of_bases, b=targets, rcond=1e-5)
     return sol, residuals, rank, singvals, centers, eps, list_of_bases
 
 
