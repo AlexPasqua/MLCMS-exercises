@@ -97,12 +97,11 @@ def solve_trajectory(x0, x1, funct, find_best_dt=False, end_time=0.1, plot=False
         plt.show()
     return x1_pred, best_dt, best_mse
 
-def create_phase_portrait_derivative(system, alpha: float, title_suffix: str, save_plots=False,
+def create_phase_portrait_derivative(system, title_suffix: str, save_plots=False,
                                      save_path: str = None, display=True, fig_size=10):
     """
     Plots the phase portrait of the given 'system', where 'system' is a 2 dimensional system given as couple of strings
     :param system: system ODEs
-    :param alpha: system's parameter
     :param title_suffix: suffix to add to the title (after the value of alpha and A's eigenvalues
     :param save_plots: if True, saves the plots instead of displaying them
     :param save_path: path where to save the plots if save_plots is True
@@ -110,10 +109,9 @@ def create_phase_portrait_derivative(system, alpha: float, title_suffix: str, sa
     :param fig_size: gives width and height of plotted figure
     """
     # setting up grid width/height
-    w = 5
+    w = 4.5
     Y, X = np.mgrid[-w:w:100j, -w:w:100j]
     # dynamic system parameter, responsible for the change in behaviour
-    alpha = alpha
     U, V = [], []
     for x2 in X[0]:
         for x1 in Y[:, 0]:
@@ -124,7 +122,7 @@ def create_phase_portrait_derivative(system, alpha: float, title_suffix: str, sa
     V = np.reshape(V, X.shape)
     plt.figure(figsize=(fig_size, fig_size))
     plt.streamplot(X, Y, U, V, density=2)
-    plt.title(f"alpha: {alpha} - {title_suffix}")
+    plt.title(f"{title_suffix}")
     if display:
         plt.show()
     if save_plots:
