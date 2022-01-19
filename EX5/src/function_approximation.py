@@ -85,7 +85,7 @@ def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]] = "../data/nonline
     return sol, residuals, rank, singvals, centers, eps, list_of_bases
 
 
-def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.ndarray]], linear: bool, centers=None, eps=None):
+def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.ndarray]], linear: bool, centers=None, eps=None, **kwargs):
     """
     Plot the approximated function over the actual data, given the solution of the least squares problem and the data
     :param lstsqr_sol: solution of the least squares problem
@@ -95,6 +95,7 @@ def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.nda
     :param linear: if True, plots the linear approximated function, otherwise the non-linear one
     :param centers: (optional) list of center points to compute the basis functions in case linear=False
     :param eps: (optional) epsilon parameter to compute the basis functions in case linear=False
+    :param kwargs: (optional) can contain more data to include in the title of the plot, e.g. MSE of the approximation
     """
     plot_title = "Approximated function plotted over the actual data"
 
@@ -109,6 +110,10 @@ def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.nda
         list_of_bases, centers = compute_bases(points=np.expand_dims(x, 1), centers=centers, eps=eps, n_bases=len(centers))
         y = np.sum(lstsqr_sol * list_of_bases, axis=1)  # '*' indicates and elementwise product (dimensions broadcast to common shape)
         plot_title += f"\nn_bases: {len(centers)}, eps: {eps}"
+
+    # add eventual more data to the plot title
+    for k, v in kwargs.items():
+        plot_title += f", {k}: {v}"
 
     # plot approximated function over the actual data
     plt.figure(figsize=(5, 5))
