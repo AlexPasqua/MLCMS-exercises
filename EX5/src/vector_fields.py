@@ -37,8 +37,8 @@ def estimate_vectors(delta_t: float, x0=None, x1=None) -> np.ndarray:
 def create_phase_portrait_matrix(A: np.ndarray, title_suffix: str, save_plots=False,
                                  save_path: str = None, display=True):
     """
-    Plots the phase portrait of the linear system Ax, where A is a 2x2 matrix and x is a 2-dim vector
-    :param A: system's 2x2 matrix
+    Plots the phase portrait of the linear system Ax
+    :param A: system's (2x2 matrix in our case)
     :param title_suffix: suffix to add to the title (after the value of alpha and A's eigenvalues
     :param save_plots: if True, saves the plots instead of displaying them
     :param save_path: path where to save the plots if save_plots is True
@@ -62,31 +62,38 @@ def create_phase_portrait_matrix(A: np.ndarray, title_suffix: str, save_plots=Fa
 
 def solve_trajectory(x0, x1, funct, find_best_dt=False, end_time=0.1, plot=False):
     """
-    Solves initial value point problem for a dataset, up to a certain moment in time
+    Solves initial value point problem for a whole dataset of points, up to a certain moment in time
     :param x0: the data at time 0
     :param x1: the data at unknown time step after 0
     :param funct: to get derivative for next steps generation
+    :param find_best_dt: if True also the dt where we have lowest MSE is searched
     :param end_time: end time for the simulation
     :param plot: boolean to produce a scatter plot of the trajectory (orange) with the final x1 points in blue
-    :returns: points at time end_time
+    :returns: points at time end_time, best point in time (getting lowest MSE), lowest MSE
     """
+    # initialize variables for find_best_dt procedure
     best_dt = -1
     best_mse = math.inf
     x1_pred = []
+    # fixate some times where system must be evaluated
     t_eval = np.linspace(0, end_time, 100)
     sols = []
     for i in range(len(x0)):
-        sol = solve_ivp(funct, [0, end_time], x0[i], t_eval=t_eval)
-        x1_pred.append([sol.y[0,-1], sol.y[1,-1]])
+        sol = solve_ivp(funct, [0, end_time], x0[i], t_eval=t_eval)  # solve initial value problem for a given point
+        x1_pred.append([sol.y[0, -1], sol.y[1, -1]])  # save the final solution
         if find_best_dt:
+            # to find best dt then all the different snapshots in time have to be saved
             sols.append(sol.y)
+        # plot the trajectory (orange) and ground truth end point (blue)
         if plot:
-            plt.scatter(x1[i,0], x1[i,1], c='blue', s=10)
-            plt.scatter(sol.y[0,:],sol.y[1,:], c='orange', s=4)
+            plt.scatter(x1[i, 0], x1[i, 1], c='blue', s=10)
+            plt.scatter(sol.y[0, :], sol.y[1, :], c='orange', s=4)
     if find_best_dt:
+        # try all the different moments in time, check if it is the best time
         for i in range(len(t_eval)):
             pred = [[sols[el][0][i], sols[el][1][i]] for el in range(len(sols))]
-            mse = np.linalg.norm(pred - x1)**2 / x1.shape[0]
+            mse = np.mean(np.linalg.norm(pred - x1, axis=1)**2)
+            # if mse found is best yet, update the variables
             if mse < best_mse:
                 best_mse = mse
                 best_dt = t_eval[i]
@@ -95,27 +102,28 @@ def solve_trajectory(x0, x1, funct, find_best_dt=False, end_time=0.1, plot=False
         plt.show()
     return x1_pred, best_dt, best_mse
 
-def create_phase_portrait_derivative(system, title_suffix: str, save_plots=False,
-                                     save_path: str = None, display=True, fig_size=10):
+
+def create_phase_portrait_derivative(funct, title_suffix: str, save_plots=False,
+                                     save_path: str = None, display=True, fig_size=10, w=4.5):
     """
-    Plots the phase portrait of the given 'system', where 'system' is a 2 dimensional system given as couple of strings
-    :param system: system ODEs
+    Plots the phase portrait given a 'funct' that gives the derivatives for a certain point
+    :param funct: given a 2d point gives back the 2 derivatives
     :param title_suffix: suffix to add to the title (after the value of alpha and A's eigenvalues
     :param save_plots: if True, saves the plots instead of displaying them
     :param save_path: path where to save the plots if save_plots is True
     :param display: if True, display the plots
     :param fig_size: gives width and height of plotted figure
+    :param w: useful for defining range for setting Y and X
     """
     # setting up grid width/height
-    w = 4.5
     Y, X = np.mgrid[-w:w:100j, -w:w:100j]
     # dynamic system parameter, responsible for the change in behaviour
     U, V = [], []
     for x2 in X[0]:
         for x1 in Y[:, 0]:
-            res = system(0, [x1,x2])
-            U.append(res[0])
-            V.append(res[1])
+            res = funct(0, np.array([x1, x2]))
+            U.append(res[0][0])
+            V.append(res[0][1])
     U = np.reshape(U, X.shape)
     V = np.reshape(V, X.shape)
     plt.figure(figsize=(fig_size, fig_size))
@@ -125,6 +133,3 @@ def create_phase_portrait_derivative(system, title_suffix: str, save_plots=False
         plt.show()
     if save_plots:
         plt.savefig(save_path)
-
-if __name__ == '__main__':
-    vecs = estimate_vectors(delta_t=0.1)
