@@ -26,19 +26,14 @@ def get_points_and_targets(data: Union[str, Iterable[np.ndarray]]) -> Tuple[np.n
         points, targets = data[0], data[1]
     return points, targets
 
+
 def rbf(x, x_l, eps):
-    """radial basic function
-    Parameters
-    ----------
-    x: np.ndarray
-        data
-    x_l: np.ndarray
-        random selected data
-    eps: float
-        epsilon
-    Returns
-    -------
-    matrix contains radial basic function value
+    """
+    radial basic function
+    :param x: point/s
+    :param x_l: center/s
+    :param eps: radius of gaussians
+    :return: matrix contains radial basic function
     """
     return np.exp(-cdist(x, x_l) ** 2 / eps ** 2)
 
@@ -139,11 +134,27 @@ def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.nda
     plt.show()
     
 # Functions for solve_ivp
-
 def rbf_approx(t, y, centers, eps, C):
-    y = y.reshape(1,2)
+    """
+    function to return vector field of a single point (rbf)
+    :param t: time (for solve_ivp)
+    :param y: single point
+    :param centers: all centers
+    :param eps: radius of gaussians
+    :param C: coefficient matrix, found with least squares
+    :return: derivative for point y
+    """
+    y = y.reshape(1, y.shape[-1])
     phi = np.exp(-cdist(y, centers) ** 2 / eps ** 2)
     return phi @ C
 
+
 def linear_approx(t, y, A):
+    """
+    function to return vector field of a single point (linear)
+    :param t: time (for solve_ivp)
+    :param y: single point
+    :param A: coefficient matrix, found with least squares
+    :return: derivative for point y
+    """
     return A @ y

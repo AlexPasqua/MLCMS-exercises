@@ -4,6 +4,7 @@ import math
 from typing import Tuple
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
+from function_approximation import rbf_approx, approx_nonlin_func
 
 
 def read_vectorfield_data(dir_path="../data/", base_filename="linear_vectorfield_data") -> Tuple[np.ndarray, np.ndarray]:
@@ -102,6 +103,28 @@ def solve_trajectory(x0, x1, funct, args, find_best_dt=False, end_time=0.1, plot
         plt.show()
     return x1_pred, best_dt, best_mse
 
+
+def find_best_rbf_configuration(x0, x1, dt=0.1, end_time=0.5):
+    """
+    grid search over various different eps and n_bases values, returning the whole configuration with lowest MSE
+    :param x0: data at time 0
+    :param x1: data after a certain unknown dt
+    :param dt: dt to approximate the vector field between x0 and x1
+    :param end_time: total time of solve_ivp system solving trajectory
+    :return: best mse found with the configuration, including eps, n_bases, dt at which the mse was found, centers
+    """
+    final_best_mse, final_best_eps, final_best_n_bases, final_best_dt = math.inf, -1, -1, -1  # initialize variables
+    n_bases_trials = [int(i) for i in np.linspace(100, 1001, 20)]  # define search space for n_bases
+    for n_bases in n_bases_trials:
+        centers = x0[np.random.choice(range(x0.shape[0]), replace=False, size=n_bases)]  # define centers
+        for eps in (0.3, 0.5, 0.7, 1.0, 5.0, 10.0, 20.0):
+            v = estimate_vectors(dt, x0, x1)  # estimate vector field
+            C, res, _, _, _, eps, phi = approx_nonlin_func(data=(x0,v), n_bases=n_bases, eps=eps, centers=centers)
+            x1_pred, best_dt, best_mse = solve_trajectory(x0, x1, rbf_approx, find_best_dt=True, args=[centers, eps, C], end_time=end_time, plot=False)
+            if final_best_mse > best_mse:  # if new mse is better then update all return variables
+                final_best_mse, final_best_eps, final_best_n_bases, final_best_dt, final_centers  = best_mse, eps, n_bases, best_dt, centers
+    print(f"Printing best configuration: eps = {final_best_eps} - n_bases = {final_best_n_bases} - dt = {final_best_dt} giving MSE = {final_best_mse}")
+    return final_best_mse, final_best_eps, final_best_n_bases, final_best_dt, final_centers
 
 
 def create_phase_portrait_derivative(funct, title_suffix: str, save_plots=False,
