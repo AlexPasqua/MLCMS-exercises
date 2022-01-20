@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from typing import Union, Iterable, Tuple
+from scipy.spatial.distance import cdist
 
 
 def get_points_and_targets(data: Union[str, Iterable[np.ndarray]]) -> Tuple[np.ndarray, np.ndarray]:
@@ -26,6 +27,42 @@ def get_points_and_targets(data: Union[str, Iterable[np.ndarray]]) -> Tuple[np.n
     return points, targets
 
 
+# def compute_bases(points: np.ndarray, eps: float, n_bases: int, centers: np.ndarray = None):
+#     """
+#     Compute the basis functions
+#     :param points: the points on which to calculate the basis functions
+#     :param centers: the center points to pick to compute the basis functions
+#     :param eps: epsilon param of the basis functions
+#     :param n_bases: number of basis functions to compute
+#     :returns: list of basis functions evaluated on every point in 'points'
+#     """
+#     if centers is None:
+#         # create n_bases basis functions' center points
+#         centers = np.random.choice(points.ravel(), replace=False, size=n_bases)
+#     list_of_bases = np.empty(shape=(len(points), n_bases))
+#     for i, center_point in enumerate(centers):
+#         subtraction = np.subtract(center_point, points)  # note: center_point is a single point, points are many points -> broadcasting
+#         norm = np.linalg.norm(subtraction, axis=1)
+#         basis = np.exp(-norm ** 2 / eps ** 2)
+#         list_of_bases[:, i] = basis
+#     return list_of_bases, centers
+
+def rbf(x, x_l, eps):
+    """radial basic function
+    Parameters
+    ----------
+    x: np.ndarray
+        data
+    x_l: np.ndarray
+        random selected data
+    eps: float
+        epsilon
+    Returns
+    -------
+    matrix contains radial basic function value
+    """
+    return np.exp(-cdist(x, x_l) ** 2 / eps ** 2)
+
 def compute_bases(points: np.ndarray, eps: float, n_bases: int, centers: np.ndarray = None):
     """
     Compute the basis functions
@@ -37,14 +74,9 @@ def compute_bases(points: np.ndarray, eps: float, n_bases: int, centers: np.ndar
     """
     if centers is None:
         # create n_bases basis functions' center points
-        centers = np.random.choice(points.ravel(), replace=False, size=n_bases)
-    list_of_bases = np.empty(shape=(len(points), n_bases))
-    for i, center_point in enumerate(centers):
-        subtraction = np.subtract(center_point, points)  # note: center_point is a single point, points are many points -> broadcasting
-        norm = np.linalg.norm(subtraction, axis=1)
-        basis = np.exp(-norm ** 2 / eps ** 2)
-        list_of_bases[:, i] = basis
-    return list_of_bases, centers
+        centers = points[np.random.choice(points.ravel(), replace=False, size=n_bases)]
+    phi = rbf(points, points[centers], eps)
+    return phi, centers
 
 
 def approx_lin_func(data: Union[str, Iterable[np.ndarray]] = "../data/linear_function_data.txt") -> Tuple[np.ndarray, np.ndarray, int, np.ndarray]:
@@ -72,7 +104,8 @@ def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]] = "../data/nonline
     :param n_bases: the number of basis functions to approximate the nonlinear function
     :param eps: bandwidth of the basis functions
     :param centers: list of center points to compute the basis functions
-    :returns: tuple (least squares solution, residuals, rank of coefficients matrix, singular values of coefficient matrix)
+    :returns: tuple (least squares solution (transposed), residuals, rank of coefficients matrix, singular values of coefficient matrix, 
+                    centers, eps and phi (list_of_basis))
     """
     # get coefficients and targets form the data
     points, targets = get_points_and_targets(data)
@@ -82,7 +115,7 @@ def approx_nonlin_func(data: Union[str, Iterable[np.ndarray]] = "../data/nonline
 
     # solve least square using the basis functions in place of the coefficients to use linear method with nonlinear function
     sol, residuals, rank, singvals = np.linalg.lstsq(a=list_of_bases, b=targets, rcond=1e-5)
-    return sol.T, residuals, rank, singvals, centers, eps, list_of_bases
+    return sol, residuals, rank, singvals, centers, eps, list_of_bases
 
 
 def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.ndarray]], linear: bool, centers=None, eps=None, **kwargs):
