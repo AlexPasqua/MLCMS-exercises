@@ -60,7 +60,7 @@ def create_phase_portrait_matrix(A: np.ndarray, title_suffix: str, save_plots=Fa
         plt.savefig(save_path)
 
 
-def solve_trajectory(x0, x1, funct, find_best_dt=False, end_time=0.1, plot=False):
+def solve_trajectory(x0, x1, funct, args, find_best_dt=False, end_time=0.1, plot=False):
     """
     Solves initial value point problem for a whole dataset of points, up to a certain moment in time
     :param x0: the data at time 0
@@ -79,7 +79,7 @@ def solve_trajectory(x0, x1, funct, find_best_dt=False, end_time=0.1, plot=False
     t_eval = np.linspace(0, end_time, 100)
     sols = []
     for i in range(len(x0)):
-        sol = solve_ivp(funct, [0, end_time], x0[i], t_eval=t_eval)  # solve initial value problem for a given point
+        sol = solve_ivp(funct, [0, end_time], x0[i], args=args, t_eval=t_eval)  # solve initial value problem for a given point
         x1_pred.append([sol.y[0, -1], sol.y[1, -1]])  # save the final solution
         if find_best_dt:
             # to find best dt then all the different snapshots in time have to be saved
@@ -101,6 +101,7 @@ def solve_trajectory(x0, x1, funct, find_best_dt=False, end_time=0.1, plot=False
         plt.rcParams["figure.figsize"] = (14,14)
         plt.show()
     return x1_pred, best_dt, best_mse
+
 
 
 def create_phase_portrait_derivative(funct, title_suffix: str, save_plots=False,

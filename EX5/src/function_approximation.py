@@ -26,27 +26,6 @@ def get_points_and_targets(data: Union[str, Iterable[np.ndarray]]) -> Tuple[np.n
         points, targets = data[0], data[1]
     return points, targets
 
-
-# def compute_bases(points: np.ndarray, eps: float, n_bases: int, centers: np.ndarray = None):
-#     """
-#     Compute the basis functions
-#     :param points: the points on which to calculate the basis functions
-#     :param centers: the center points to pick to compute the basis functions
-#     :param eps: epsilon param of the basis functions
-#     :param n_bases: number of basis functions to compute
-#     :returns: list of basis functions evaluated on every point in 'points'
-#     """
-#     if centers is None:
-#         # create n_bases basis functions' center points
-#         centers = np.random.choice(points.ravel(), replace=False, size=n_bases)
-#     list_of_bases = np.empty(shape=(len(points), n_bases))
-#     for i, center_point in enumerate(centers):
-#         subtraction = np.subtract(center_point, points)  # note: center_point is a single point, points are many points -> broadcasting
-#         norm = np.linalg.norm(subtraction, axis=1)
-#         basis = np.exp(-norm ** 2 / eps ** 2)
-#         list_of_bases[:, i] = basis
-#     return list_of_bases, centers
-
 def rbf(x, x_l, eps):
     """radial basic function
     Parameters
@@ -63,6 +42,7 @@ def rbf(x, x_l, eps):
     """
     return np.exp(-cdist(x, x_l) ** 2 / eps ** 2)
 
+
 def compute_bases(points: np.ndarray, eps: float, n_bases: int, centers: np.ndarray = None):
     """
     Compute the basis functions
@@ -74,8 +54,9 @@ def compute_bases(points: np.ndarray, eps: float, n_bases: int, centers: np.ndar
     """
     if centers is None:
         # create n_bases basis functions' center points
-        centers = points[np.random.choice(points.ravel(), replace=False, size=n_bases)]
-    phi = rbf(points, points[centers], eps)
+        # centers = points[np.random.choice(points.ravel(), replace=False, size=n_bases)]
+        centers = points[np.random.choice(range(points.shape[0]), replace=False, size=n_bases)]
+    phi = rbf(points, centers, eps)
     return phi, centers
 
 
@@ -156,3 +137,13 @@ def plot_func_over_data(lstsqr_sol: np.ndarray, data: Union[str, Iterable[np.nda
     plt.title(plot_title)
     plt.tight_layout()
     plt.show()
+    
+# Functions for solve_ivp
+
+def rbf_approx(t, y, centers, eps, C):
+    y = y.reshape(1,2)
+    phi = np.exp(-cdist(y, centers) ** 2 / eps ** 2)
+    return phi @ C
+
+def linear_approx(t, y, A):
+    return A @ y
