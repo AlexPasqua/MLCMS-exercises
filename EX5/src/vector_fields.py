@@ -127,7 +127,7 @@ def find_best_rbf_configuration(x0, x1, dt=0.1, end_time=0.5):
     return final_best_mse, final_best_eps, final_best_n_bases, final_best_dt, final_centers
 
 
-def create_phase_portrait_derivative(funct, title_suffix: str, save_plots=False,
+def create_phase_portrait_derivative(funct, args, title_suffix: str, save_plots=False,
                                      save_path: str = None, display=True, fig_size=10, w=4.5):
     """
     Plots the phase portrait given a 'funct' that gives the derivatives for a certain point
@@ -145,7 +145,7 @@ def create_phase_portrait_derivative(funct, title_suffix: str, save_plots=False,
     U, V = [], []
     for x2 in X[0]:
         for x1 in Y[:, 0]:
-            res = funct(0, np.array([x1, x2]))
+            res = funct(0, np.array([x1, x2]), *args)
             U.append(res[0][0])
             V.append(res[0][1])
     U = np.reshape(U, X.shape)
